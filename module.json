@@ -1,0 +1,47 @@
+{
+  "id": "lumenn-lightweight",
+  "title": "Lumenn Lightweight — Otimizador de Imagens",
+  "description": "Otimiza imagens para WebP com modo lote e hook de upload automático",
+  "version": "0.1.0",
+  "license": "GPL-3.0",
+  "authors": [
+    {
+      "name": "Nelson"
+    }
+  ],
+  "compatibility": {
+    "minimum": "13.350",
+    "verified": "13.350",
+    "maximum": "14.999"
+  },
+  "relationships": {
+    "requires": [
+      {
+        "id": "lib-wrapper",
+        "type": "module",
+        "manifest": "https://github.com/ruipin/fvtt-lib-wrapper/releases/download/v1.13.5.1/module.json",
+        "compatibility": {
+          "verified": "14"
+        }
+      }
+    ]
+  },
+  "esmodules": [
+    "src/lumenn-lightweight.js"
+  ],
+  "styles": [
+    "styles/lumenn-lightweight.css"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    },
+    {
+      "lang": "pt-BR",
+      "name": "Português (Brasil)",
+      "path": "lang/pt-BR.json"
+    }
+  ]
+}

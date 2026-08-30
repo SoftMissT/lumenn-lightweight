@@ -1,0 +1,90 @@
+.lumenn-form .form-group {
+  margin-bottom: 12px;
+}
+
+.lumenn-form label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #b5b3a8;
+}
+
+.lumenn-form input[type="range"] {
+  width: 100%;
+  margin: 4px 0;
+}
+
+.lumenn-form .range-value {
+  display: inline-block;
+  min-width: 40px;
+  text-align: right;
+  font-size: 12px;
+  color: #b5b3a8;
+}
+
+.lumenn-form .checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lumenn-form .checkbox label {
+  margin-bottom: 0;
+  font-weight: normal;
+}
+
+.lumenn-batch-btn {
+  width: 100%;
+  padding: 8px 16px;
+  background: #4a9; 
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.lumenn-batch-btn:hover {
+  background: #3a8;
+}
+
+.lumenn-batch-btn:disabled {
+  background: #666;
+  cursor: not-allowed;
+}
+
+.lumenn-progress {
+  margin-top: 12px;
+}
+
+.lumenn-progress .progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #333;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.lumenn-progress .progress-fill {
+  height: 100%;
+  width: 0%;
+  background: #4a9;
+  transition: width 0.3s;
+}
+
+.lumenn-progress .progress-text {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #b5b3a8;
+  text-align: center;
+}
+
+.lumenn-settings-btn {
+  width: 100%;
+  margin-top: 8px;
+  padding: 6px 12px;
+  text-align: left;
+}

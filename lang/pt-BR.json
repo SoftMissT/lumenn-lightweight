@@ -1,0 +1,39 @@
+{
+  "lumenn-lightweight": {
+    "settings": {
+      "quality": {
+        "name": "Qualidade da Compressão",
+        "hint": "Qualidade da compressão WebP de 0.1 (baixa) a 1.0 (sem perda)."
+      },
+      "overridePercent": {
+        "name": "Economia Mínima %",
+        "hint": "O arquivo deve diminuir pelo menos esta porcentagem para ser substituído."
+      },
+      "autoOptimize": {
+        "name": "Otimizar Uploads Automaticamente",
+        "hint": "Comprimir imagens automaticamente ao enviar via FilePicker."
+      },
+      "skipExisting": {
+        "name": "Pular WebP Existente",
+        "hint": "Pular arquivos que já possuem versão .webp no mesmo diretório."
+      },
+      "button": "Otimizador de Imagens"
+    },
+    "dialog": {
+      "title": "Lumenn Lightweight — Otimizador de Imagens",
+      "quality": "Qualidade da Compressão",
+      "overridePercent": "Economia Mínima %",
+      "autoOptimize": "Otimizar uploads automaticamente",
+      "skipExisting": "Pular se WebP existir",
+      "batchOptimize": "Otimizar Biblioteca",
+      "close": "Fechar"
+    },
+    "notifications": {
+      "optimized": "{file} → {newFile} (−{percent}%)",
+      "skipped": "{file} — compressão não reduziu tamanho suficiente",
+      "done": "Pronto! {optimized} otimizados, {skipped} pulados, {saved} KB economizados.",
+      "failed": "Falha ao otimizar {file}. Verifique o console.",
+      "noLibWrapper": "libWrapper não encontrado. Hook de upload não registrado."
+    }
+  }
+}
