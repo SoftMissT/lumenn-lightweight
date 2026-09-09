@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   isImageFile,
+  isWebpFile,
   getWebpFilename,
   shouldReplace,
   compressImage,
@@ -13,11 +14,25 @@ describe("isImageFile", () => {
   it("returns false for non-image files", () => {
     expect(isImageFile("document.pdf")).toBe(false);
   });
+  it("recognizes image extensions case-insensitively and ignores query strings", () => {
+    expect(isImageFile("portrait.PNG?cache=1")).toBe(true);
+  });
+});
+
+describe("isWebpFile", () => {
+  it("recognizes existing WebP paths", () => {
+    expect(isWebpFile("folder/portrait.WEBP?cache=1")).toBe(true);
+  });
 });
 
 describe("getWebpFilename", () => {
   it("converts PNG to WebP", () => {
     expect(getWebpFilename("image.png")).toBe("image.webp");
+  });
+  it("preserves dotted filenames and directories", () => {
+    expect(getWebpFilename("assets/hero.v2.final.png")).toBe(
+      "assets/hero.v2.final.webp",
+    );
   });
 });
 
@@ -51,7 +66,7 @@ describe("compressImage", () => {
     };
   });
 
-  it("skips existing webp below threshold", async () => {
+  it("skips every existing webp regardless of size", async () => {
     const blob = new Blob(["small_webp"], { type: "image/webp" });
     const result = await compressImage(blob, 0.85, {
       skipThresholdBytes: 10000,

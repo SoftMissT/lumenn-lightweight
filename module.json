@@ -2,10 +2,10 @@
   "id": "lumenn-lightweight",
   "title": "Lumenn Lightweight — Otimizador de Imagens",
   "description": "Otimiza imagens para WebP com modo lote e hook de upload automático",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "license": "GPL-3.0",
   "manifest": "https://github.com/SoftMissT/lumenn-lightweight/releases/latest/download/module.json",
-  "download": "https://github.com/SoftMissT/lumenn-lightweight/releases/download/v0.0.2/lumenn-lightweight-v0.0.2.zip",
+  "download": "https://github.com/SoftMissT/lumenn-lightweight/releases/download/v0.0.3/lumenn-lightweight-v0.0.3.zip",
   "authors": [
     {
       "name": "Nelson"

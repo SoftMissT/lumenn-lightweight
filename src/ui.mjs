@@ -1,6 +1,7 @@
 import { getQuality, getOverridePercent, getSkipThresholdBytes } from './settings.mjs';
 import { processBatch } from './batch.mjs';
 import { scanUnoptimizedAssets } from './scanner.mjs';
+import { getWebpFilename } from './compression.mjs';
 
 const MODULE_ID = 'lumenn-lightweight';
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -88,20 +89,24 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(ApplicationV2
         skipThresholdBytes: getSkipThresholdBytes(),
         fetchImageFn: async (path) => {
           const res = await fetch(path);
+          if (!res.ok) throw new Error(`Falha ao ler ${path}: HTTP ${res.status}`);
           return await res.blob();
         },
         saveImageFn: async (path, compressedBlob) => {
           const filename = path.split('/').pop();
-          const webpName = filename.split('.')[0] + '.webp';
+          const webpName = getWebpFilename(filename);
           const file = new File([compressedBlob], webpName, { type: 'image/webp' });
           
           const pathParts = path.split('/');
           pathParts.pop();
-          let targetPath = pathParts.join('/');
-          if (!targetPath) targetPath = "assets";
+          const targetPath = pathParts.join('/');
           
           const uploadRes = await FilePicker.upload("data", targetPath, file, {}, {});
-          return uploadRes.path;
+          const uploadedPath = uploadRes?.path ?? uploadRes;
+          if (typeof uploadedPath !== "string" || !uploadedPath) {
+            throw new Error("FilePicker.upload não retornou um caminho válido");
+          }
+          return uploadedPath;
         },
         updateDocumentFn: async (asset, newPath) => {
           let collection;

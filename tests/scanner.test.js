@@ -11,6 +11,7 @@ describe("scanner", () => {
         prototypeToken: { texture: { src: "assets/goblin_token.png" } },
       },
       { id: "a2", name: "Actor 2", img: "icons/svg/mystery-man.svg" },
+      { id: "a3", name: "Actor 3", img: "assets/already.webp" },
     ];
     const items = [{ id: "i1", name: "Item 1", img: "assets/sword.jpg" }];
     const scenes = [
@@ -24,12 +25,11 @@ describe("scanner", () => {
 
     const results = scanUnoptimizedAssets({ actors, items, scenes });
 
-    expect(results).toHaveLength(5);
+    expect(results).toHaveLength(4);
     expect(results.map((r) => r.imgPath)).toEqual([
       "assets/goblin.png",
       "assets/goblin_token.png",
       "assets/sword.jpg",
-      "assets/map.webp",
       "assets/clouds.png",
     ]);
   });

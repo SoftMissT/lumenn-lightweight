@@ -1,15 +1,28 @@
 const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "webp"];
 
+export function getFileExtension(filename) {
+  if (typeof filename !== "string") return "";
+  const cleanName = filename.split(/[?#]/, 1)[0];
+  return cleanName.split(".").pop()?.toLowerCase() ?? "";
+}
+
 export function isImageFile(filename) {
-  const ext = filename.split(".").pop()?.toLowerCase();
-  return IMAGE_EXTENSIONS.includes(ext);
+  return IMAGE_EXTENSIONS.includes(getFileExtension(filename));
+}
+
+export function isWebpFile(filename) {
+  return getFileExtension(filename) === "webp";
 }
 
 export function getWebpFilename(filename) {
-  const parts = filename.split(".");
-  const ext = parts.pop()?.toLowerCase();
-  if (ext === "webp") return filename;
-  return parts.join(".") + ".webp";
+  if (isWebpFile(filename)) return filename;
+  const lastSlash = Math.max(filename.lastIndexOf("/"), filename.lastIndexOf("\\"));
+  const directory = lastSlash >= 0 ? filename.slice(0, lastSlash + 1) : "";
+  const basename = filename.slice(lastSlash + 1);
+  const cleanBasename = basename.split(/[?#]/, 1)[0];
+  const dot = cleanBasename.lastIndexOf(".");
+  const stem = dot > 0 ? cleanBasename.slice(0, dot) : cleanBasename;
+  return `${directory}${stem}.webp`;
 }
 
 export function shouldReplace(originalSize, newSize, overridePercent = 25) {
@@ -29,10 +42,10 @@ export async function compressImage(
 
   const originalSize = fileOrBlob.size;
 
-  const isWebp =
-    fileOrBlob.type === "image/webp" ||
-    (fileOrBlob.name && fileOrBlob.name.toLowerCase().endsWith(".webp"));
-  if (isWebp && originalSize <= options.skipThresholdBytes) {
+  const isWebp = fileOrBlob.type === "image/webp" || isWebpFile(fileOrBlob.name);
+  // WebP is already in the target format. Re-encoding it is lossy and can
+  // replace a valid Foundry reference with a second upload unnecessarily.
+  if (isWebp) {
     return {
       blob: fileOrBlob,
       originalSize,

@@ -1,3 +1,5 @@
+import { isImageFile, isWebpFile } from "./compression.mjs";
+
 export function scanUnoptimizedAssets(collections, thresholdBytes = 102400) {
   const { actors = [], items = [], scenes = [] } = collections;
   const results = [];
@@ -6,19 +8,15 @@ export function scanUnoptimizedAssets(collections, thresholdBytes = 102400) {
     if (!imgPath || typeof imgPath !== "string") return;
     if (
       imgPath.startsWith("icons/svg/") ||
-      imgPath.endsWith(".svg") ||
+      imgPath.toLowerCase().split(/[?#]/, 1)[0].endsWith(".svg") ||
+      !isImageFile(imgPath) ||
+      isWebpFile(imgPath) ||
       imgPath.startsWith("data:")
     )
       return;
 
-    // Foundry files aren't physically scanned here for size,
-    // so we just mark them as candidates. We'll pass a dummy size of Infinity
-    // so the processor knows to check their real size before compressing.
-    // The spec requires `currentSize`, but we can't synchronously get it.
-    // If we assume the processor handles size threshold, we just return all candidates.
-    // Actually, to fully match the spec `scanUnoptimizedAssets` should return items
-    // where we don't know the size yet or assume it's large if it's not WebP.
-    // If it is WebP, it might be small, but without fetching we don't know.
+    // Foundry files aren't physically scanned here for size, so non-WebP
+    // image assets are returned as candidates for the asynchronous processor.
     results.push({
       id,
       type,

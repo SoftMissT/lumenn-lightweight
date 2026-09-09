@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.3] - 2026-09-09
+
+### Fixed
+
+- Restaurado o botão do Otimizador de Imagens nos hooks de Settings V1/V2.
+- Restaurada a abertura do dialog de lote com compatibilidade entre jQuery e DOM nativo.
+- Upload em lote agora aborta antes de atualizar o Actor/Item/Scene se o FilePicker não retornar um caminho válido.
+- Mantida a proteção contra reprocessamento de WebP existente.
+
 ## [0.0.2] - 2026-09-09
 
 ### Changed
