@@ -58,7 +58,8 @@ describe("processBatch", () => {
       name: "Hwan",
     };
     const originalWebp = new Blob(["small"], { type: "image/webp" });
-    const saveImageFn = vi.fn().mockResolvedValue("worlds/test/Hwan Enko.webp");
+    const recoveredPath = "worlds/recovered/Hwan Enko.webp";
+    const saveImageFn = vi.fn().mockResolvedValue(recoveredPath);
     const updateDocumentFn = vi.fn().mockResolvedValue();
 
     const results = await processBatch([asset], {
@@ -66,15 +67,16 @@ describe("processBatch", () => {
       fetchImageFn: vi.fn().mockResolvedValue({
         blob: originalWebp,
         repairRequired: true,
+        sourcePath: recoveredPath,
       }),
       saveImageFn,
       updateDocumentFn,
     });
 
-    expect(saveImageFn).toHaveBeenCalledWith(asset.imgPath, originalWebp);
+    expect(saveImageFn).toHaveBeenCalledWith(recoveredPath, originalWebp);
     expect(updateDocumentFn).toHaveBeenCalledWith(
       asset,
-      "worlds/test/Hwan Enko.webp",
+      recoveredPath,
     );
     expect(results).toMatchObject({ processed: 1, repaired: 1, skipped: 0 });
   });

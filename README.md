@@ -24,6 +24,7 @@
 - **Configurações flexíveis** — qualidade, economia mínima, threshold de skip
 - **Não-destrutivo** — arquivos originais nunca são apagados automaticamente
 - **Resiliente** — falha em um asset não aborta o lote inteiro
+- **Recuperação de referências** — procura extensões irmãs e arquivos movidos por nome único antes de declarar um 404
 - **i18n** — Inglês e Português (Brasil)
 
 ## Compatibilidade
@@ -53,6 +54,8 @@ Ativado por padrão. Ao enviar uma imagem via FilePicker, ela é automaticamente
 3. O scanner organiza as referências em Retratos, Tokens, Itens, Fundos de Cena e Foregrounds
 4. Selecione os que deseja otimizar e clique em **Otimizar Biblioteca**
 5. Acompanhe o progresso pela barra
+
+Ao concluir cada item, o módulo substitui automaticamente a referência usada pelo documento pelo caminho WebP salvo. O lote produz apenas um resumo final; os uploads internos não disparam as notificações do hook automático.
 
 ### API
 

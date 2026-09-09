@@ -6,6 +6,9 @@ import {
 import { processBatch } from "./batch.mjs";
 import { scanUnoptimizedAssets } from "./scanner.mjs";
 import { decodeFoundryFilename, getWebpFilename } from "./compression.mjs";
+import { createFoundryImageFetcher } from "./file-recovery.mjs";
+import { withUploadOptimizationBypassed } from "./upload-hook.mjs";
+import { updateAssetDocumentReference } from "./document-reference.mjs";
 
 const MODULE_ID = "lumenn-lightweight";
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -17,33 +20,6 @@ const ASSET_GROUPS = [
   { key: "sceneBackgrounds", type: "Scene Background", icon: "fa-solid fa-image" },
   { key: "sceneForegrounds", type: "Scene Foreground", icon: "fa-solid fa-layer-group" },
 ];
-
-export function getLiteralPercentPath(path) {
-  if (typeof path !== "string" || !/%[0-9a-f]{2}/i.test(path)) return null;
-  const hashIndex = path.indexOf("#");
-  const queryIndex = path.indexOf("?");
-  const suffixIndex = [hashIndex, queryIndex]
-    .filter((index) => index >= 0)
-    .sort((a, b) => a - b)[0] ?? path.length;
-  return `${path.slice(0, suffixIndex).replaceAll("%", "%25")}${path.slice(suffixIndex)}`;
-}
-
-export async function fetchFoundryImage(path, fetchFn = fetch) {
-  const response = await fetchFn(path);
-  if (response.ok) {
-    return { blob: await response.blob(), repairRequired: false };
-  }
-
-  const recoveryPath = getLiteralPercentPath(path);
-  if (response.status === 404 && recoveryPath) {
-    const recoveryResponse = await fetchFn(recoveryPath);
-    if (recoveryResponse.ok) {
-      return { blob: await recoveryResponse.blob(), repairRequired: true };
-    }
-  }
-
-  throw new Error(`Falha ao ler ${path}: HTTP ${response.status}`);
-}
 
 export function groupAssetsByKind(assets, localize = (key) => key) {
   const indexedAssets = assets.map((asset, index) => ({ ...asset, index }));
@@ -195,6 +171,10 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(
     progressDiv.hidden = false;
 
     try {
+      const fetchFoundryImage = createFoundryImageFetcher({
+        fetchFn: fetch,
+        browseFn: (...args) => FilePicker.browse(...args),
+      });
       const results = await processBatch(selectedAssets, {
         quality: getQuality(),
         overridePercent: getOverridePercent(),
@@ -212,12 +192,8 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(
           pathParts.pop();
           const targetPath = pathParts.join("/");
 
-          const uploadRes = await FilePicker.upload(
-            "data",
-            targetPath,
-            file,
-            {},
-            {},
+          const uploadRes = await withUploadOptimizationBypassed(() =>
+            FilePicker.upload("data", targetPath, file, {}, {}),
           );
           const uploadedPath = uploadRes?.path ?? uploadRes;
           if (typeof uploadedPath !== "string" || !uploadedPath) {
@@ -226,21 +202,11 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(
           return uploadedPath;
         },
         updateDocumentFn: async (asset, newPath) => {
-          let collection;
-          if (asset.type.includes("Actor")) collection = game.actors;
-          else if (asset.type.includes("Item")) collection = game.items;
-          else if (asset.type.includes("Scene")) collection = game.scenes;
-
-          const doc = collection.get(asset.id);
-          if (doc) {
-            if (asset.type === "Scene Background")
-              await doc.update({ "background.src": newPath });
-            else if (asset.type === "Scene Foreground")
-              await doc.update({ foreground: newPath });
-            else if (asset.type === "Actor Token")
-              await doc.update({ "prototypeToken.texture.src": newPath });
-            else await doc.update({ img: newPath });
-          }
+          await updateAssetDocumentReference(asset, newPath, {
+            actors: game.actors,
+            items: game.items,
+            scenes: game.scenes,
+          });
         },
         onProgress: ({ done, total, current }) => {
           const percent = Math.round((done / total) * 100);
@@ -249,13 +215,11 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(
         },
       });
 
-      ui.notifications.info(
-        `${MODULE_ID}: Concluído! ${results.processed} processados (${results.repaired} referências reparadas), ${results.skipped} pulados.`,
-      );
+      const summary = `${MODULE_ID}: Concluído! ${results.processed} processados (${results.repaired} referências reparadas), ${results.skipped} pulados, ${results.failed.length} falharam.`;
       if (results.failed.length > 0) {
-        ui.notifications.error(
-          `${MODULE_ID}: ${results.failed.length} falharam. Verifique o console.`,
-        );
+        ui.notifications.error(`${summary} Verifique o console.`);
+      } else {
+        ui.notifications.info(summary);
       }
     } catch (err) {
       console.error(`${MODULE_ID}: Lote falhou`, err);

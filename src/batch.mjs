@@ -33,6 +33,7 @@ export async function processBatch(selectedAssets, options = {}) {
       const fetched = await fetchImageFn(asset.imgPath);
       const fileOrBlob = fetched?.blob instanceof Blob ? fetched.blob : fetched;
       const repairRequired = fetched?.repairRequired === true;
+      const sourcePath = fetched?.sourcePath ?? asset.imgPath;
 
       const compressed = await compressImage(fileOrBlob, quality, {
         skipThresholdBytes,
@@ -40,7 +41,7 @@ export async function processBatch(selectedAssets, options = {}) {
 
       if (repairRequired) {
         const repairedBlob = compressed.skipped ? fileOrBlob : compressed.blob;
-        const newImgPath = await saveImageFn(asset.imgPath, repairedBlob);
+        const newImgPath = await saveImageFn(sourcePath, repairedBlob);
         await updateDocumentFn(asset, newImgPath);
         results.processed++;
         results.repaired++;

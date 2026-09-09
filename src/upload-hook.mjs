@@ -13,6 +13,16 @@ import {
 import { CustomNotification } from "./notification.mjs";
 
 const MODULE_ID = "lumenn-lightweight";
+let uploadBypassDepth = 0;
+
+export async function withUploadOptimizationBypassed(callback) {
+  uploadBypassDepth++;
+  try {
+    return await callback();
+  } finally {
+    uploadBypassDepth--;
+  }
+}
 
 export function registerUploadHook() {
   if (
@@ -35,6 +45,10 @@ export function registerUploadHook() {
     MODULE_ID,
     "FilePicker.upload",
     async function (wrapped, source, path, file, body, options) {
+      if (uploadBypassDepth > 0) {
+        return wrapped(source, path, file, body, options);
+      }
+
       if (!game.user?.isGM) {
         return wrapped(source, path, file, body, options);
       }

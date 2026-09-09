@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.6] - 2026-09-09
+
+### Fixed
+
+- Referências 404 agora tentam o arquivo irmão em WebP/PNG/JPG/JPEG antes de falhar.
+- Assets movidos podem ser recuperados por basename único usando a busca wildcard oficial do `FilePicker`.
+- O caminho realmente encontrado é usado para salvar o WebP e atualizar automaticamente o campo do Actor, Token, Item ou Scene.
+- Uploads internos do lote ignoram o hook automático, evitando compressão duplicada e uma notificação por arquivo.
+- O lote exibe somente uma notificação de resumo ao terminar.
+- Resultados ambíguos ou ausentes não são adivinhados e não alteram documentos.
+
 ## [0.0.5] - 2026-09-09
 
 ### Fixed
