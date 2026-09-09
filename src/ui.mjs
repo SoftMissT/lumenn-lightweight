@@ -1,40 +1,59 @@
-import { getQuality, getOverridePercent, getAutoOptimize, getSkipExisting } from './settings.mjs';
-import { optimizeDirectory } from './batch.mjs';
+import { getQuality, getOverridePercent, getSkipThresholdBytes } from './settings.mjs';
+import { processBatch } from './batch.mjs';
+import { scanUnoptimizedAssets } from './scanner.mjs';
 
 const MODULE_ID = 'lumenn-lightweight';
 
-export function openOptimizerDialog() {
+export class LumennBatchMenuApp extends FormApplication {
+  static get defaultOptions() {
+    return foundry.utils.mergeObject(super.defaultOptions, {
+      id: "lumenn-batch-menu",
+      title: game.i18n.localize(`${MODULE_ID}.dialog.title`),
+      template: "modules/lumenn-lightweight/templates/batch-menu.html",
+      width: 500,
+      height: "auto",
+      closeOnSubmit: false
+    });
+  }
+
+  // Se nÃ£o formos usar um template HBS externo (por nÃ£o ter na spec um arquivo HTML), 
+  // podemos renderizar via openOptimizerDialog manual ou reescrever render() aqui
+  render(force = false, options = {}) {
+    openOptimizerDialog();
+    return this;
+  }
+}
+
+export async function openOptimizerDialog() {
+  if (!game.user?.isGM) return;
+
   const currentQuality = getQuality();
   const currentOverride = getOverridePercent();
-  const currentAutoOptimize = getAutoOptimize();
-  const currentSkipExisting = getSkipExisting();
+  const threshold = getSkipThresholdBytes();
+
+  // Scan unoptimized assets (RF-006)
+  ui.notifications.info(`${MODULE_ID}: Verificando assets...`);
+  const collections = { actors: game.actors, items: game.items, scenes: game.scenes };
+  const assets = scanUnoptimizedAssets(collections, threshold);
+  
+  if (assets.length === 0) {
+    ui.notifications.info(`${MODULE_ID}: Nenhum asset precisando de otimização encontrado!`);
+    return;
+  }
+
+  const listHtml = assets.map((a, i) => `
+    <div class="checkbox" style="margin-bottom: 4px;">
+      <input type="checkbox" id="l_asset_${i}" value="${i}" checked>
+      <label for="l_asset_${i}" title="${a.imgPath}">${a.type} - ${a.name}</label>
+    </div>
+  `).join('');
 
   const content = `
     <form class="lumenn-form">
-      <div class="form-group">
-        <label for="lumenn-quality">${game.i18n.localize(`${MODULE_ID}.dialog.quality`)}</label>
-        <input type="range" id="lumenn-quality" name="quality"
-               min="0.1" max="1.0" step="0.05" value="${currentQuality}">
-        <span class="range-value">${currentQuality}</span>
-      </div>
-
-      <div class="form-group">
-        <label for="lumenn-override">${game.i18n.localize(`${MODULE_ID}.dialog.overridePercent`)}</label>
-        <input type="range" id="lumenn-override" name="overridePercent"
-               min="0" max="90" step="5" value="${currentOverride}">
-        <span class="range-value">${currentOverride}%</span>
-      </div>
-
-      <div class="form-group checkbox">
-        <input type="checkbox" id="lumenn-auto" name="autoOptimize"
-               ${currentAutoOptimize ? 'checked' : ''}>
-        <label for="lumenn-auto">${game.i18n.localize(`${MODULE_ID}.dialog.autoOptimize`)}</label>
-      </div>
-
-      <div class="form-group checkbox">
-        <input type="checkbox" id="lumenn-skip" name="skipExisting"
-               ${currentSkipExisting ? 'checked' : ''}>
-        <label for="lumenn-skip">${game.i18n.localize(`${MODULE_ID}.dialog.skipExisting`)}</label>
+      <p>Foram encontrados ${assets.length} assets para compressão (Qualidade atual: ${currentQuality}).</p>
+      
+      <div style="max-height: 200px; overflow-y: auto; border: 1px solid #333; padding: 5px; margin-bottom: 10px;">
+        ${listHtml}
       </div>
 
       <div class="form-group">
@@ -62,21 +81,12 @@ export function openOptimizerDialog() {
     },
     default: 'close',
     render: (html) => {
-      _bindRangeInputs(html);
-      _bindBatchButton(html);
+      _bindBatchButton(html, assets);
     },
   }).render(true);
 }
 
-function _bindRangeInputs(html) {
-  html.find('input[type="range"]').on('input', function () {
-    const value = $(this).val();
-    const suffix = $(this).attr('name') === 'overridePercent' ? '%' : '';
-    $(this).siblings('.range-value').text(`${value}${suffix}`);
-  });
-}
-
-function _bindBatchButton(html) {
+function _bindBatchButton(html, fullAssetsList) {
   html.find('.lumenn-batch-btn').on('click', async function () {
     const btn = $(this);
     btn.prop('disabled', true).find('i').removeClass('fa-compress-alt').addClass('fa-spinner fa-spin');
@@ -87,32 +97,78 @@ function _bindBatchButton(html) {
 
     progressDiv.show();
 
-    try {
-      const dataPath = game.data?.path;
-      if (!dataPath) {
-        ui.notifications.error(`${MODULE_ID}: Could not determine Foundry data path.`);
-        return;
-      }
+    // Get selected indices
+    const selectedIndices = [];
+    html.find('input[type="checkbox"]:checked').each(function() {
+      selectedIndices.push(parseInt($(this).val()));
+    });
+    
+    const selectedAssets = fullAssetsList.filter((_, i) => selectedIndices.includes(i));
 
-      const results = await optimizeDirectory(dataPath, {
-        recursive: false,
-        onProgress: ({ file, optimized, total }) => {
-          const percent = Math.round((optimized / total) * 100);
+    if (selectedAssets.length === 0) {
+      ui.notifications.warn(`${MODULE_ID}: Nenhum asset selecionado.`);
+      btn.prop('disabled', false).find('i').removeClass('fa-spinner fa-spin').addClass('fa-compress-alt');
+      progressDiv.hide();
+      return;
+    }
+
+    try {
+      const results = await processBatch(selectedAssets, {
+        quality: getQuality(),
+        overridePercent: getOverridePercent(),
+        skipThresholdBytes: getSkipThresholdBytes(),
+        fetchImageFn: async (path) => {
+          const res = await fetch(path);
+          return await res.blob();
+        },
+        saveImageFn: async (path, compressedBlob) => {
+          // FilePicker.upload mock implementation logic for saving
+          const filename = path.split('/').pop();
+          const webpName = filename.split('.')[0] + '.webp';
+          const file = new File([compressedBlob], webpName, { type: 'image/webp' });
+          
+          // Identify source and dir
+          const pathParts = path.split('/');
+          pathParts.pop();
+          let targetPath = pathParts.join('/');
+          if (!targetPath) targetPath = "assets";
+          
+          const uploadRes = await FilePicker.upload("data", targetPath, file, {}, {});
+          return uploadRes.path;
+        },
+        updateDocumentFn: async (asset, newPath) => {
+          let collection;
+          if (asset.type.includes('Actor')) collection = game.actors;
+          else if (asset.type.includes('Item')) collection = game.items;
+          else if (asset.type.includes('Scene')) collection = game.scenes;
+
+          const doc = collection.get(asset.id);
+          if (doc) {
+            if (asset.type === 'Scene Background') await doc.update({ "background.src": newPath });
+            else if (asset.type === 'Scene Foreground') await doc.update({ foreground: newPath });
+            else if (asset.type === 'Actor Token') await doc.update({ "prototypeToken.texture.src": newPath });
+            else await doc.update({ img: newPath });
+          }
+        },
+        onProgress: ({ done, total, current }) => {
+          const percent = Math.round((done / total) * 100);
           progressFill.css('width', `${percent}%`);
-          progressText.text(`${optimized}/${total}: ${file}`);
+          progressText.text(`${done}/${total}: ${current}`);
         },
       });
 
-      const savedKB = (results.bytesSaved / 1024).toFixed(1);
       ui.notifications.info(
-        `${MODULE_ID}: Done! ${results.optimized} optimized, ${results.skipped} skipped, ${savedKB} KB saved.`
+        `${MODULE_ID}: Concluído! ${results.processed} processados, ${results.skipped} pulados.`
       );
+      if (results.failed.length > 0) {
+        ui.notifications.error(`${MODULE_ID}: ${results.failed.length} falharam. Verifique o console.`);
+      }
     } catch (err) {
-      console.error(`${MODULE_ID}: Batch optimization failed`, err);
-      ui.notifications.error(`${MODULE_ID}: Batch optimization failed. Check console.`);
+      console.error(`${MODULE_ID}: Lote falhou`, err);
+      ui.notifications.error(`${MODULE_ID}: Falha catastrófica no lote.`);
     } finally {
       btn.prop('disabled', false).find('i').removeClass('fa-spinner fa-spin').addClass('fa-compress-alt');
-      progressDiv.hide();
+      setTimeout(() => progressDiv.hide(), 2000);
     }
   });
 }

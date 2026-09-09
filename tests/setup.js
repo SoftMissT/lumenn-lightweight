@@ -1,88 +1,60 @@
-import { vi } from 'vitest';
+// Global mocks for Foundry VTT in tests
+globalThis.FormApplication = class FormApplication {
+  static get defaultOptions() { return {}; }
+};
+
+globalThis.Dialog = class Dialog {
+  constructor() {}
+  render() {}
+};
+
+globalThis.foundry = {
+  utils: {
+    mergeObject: (a, b) => ({ ...a, ...b })
+  }
+};
 
 globalThis.game = {
   data: { path: '/foundry/data' },
   settings: {
     _store: {},
-    register(moduleId, key, config) {
-      this._store[`${moduleId}.${key}`] = config.default;
+    register: (mod, key, data) => {
+      globalThis.game.settings._store[`${mod}.${key}`] = data.default;
     },
-    get(moduleId, key) {
-      return this._store[`${moduleId}.${key}`];
-    },
-    set(moduleId, key, value) {
-      this._store[`${moduleId}.${key}`] = value;
-    },
-  },
-  modules: {
-    get: (id) => ({
-      api: {},
-      active: true,
-    }),
+    registerMenu: () => {},
+    get: (mod, key) => globalThis.game.settings._store[`${mod}.${key}`]
   },
   i18n: {
-    localize: (key) => key,
-  },
-  packs: new Map(),
-};
-
-globalThis.Hooks = {
-  _listeners: {},
-  on(event, fn) {
-    if (!this._listeners[event]) this._listeners[event] = [];
-    this._listeners[event].push(fn);
-  },
-  once(event, fn) {
-    this.on(event, fn);
-  },
-  callAll(event, ...args) {
-    (this._listeners[event] || []).forEach((fn) => fn(...args));
-  },
+    localize: (key) => key
+  }
 };
 
 globalThis.ui = {
   notifications: {
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
-};
-
-globalThis.libWrapper = undefined;
-
-globalThis.OffscreenCanvas = class OffscreenCanvas {
-  constructor(w, h) {
-    this.width = w;
-    this.height = h;
-  }
-  getContext() {
-    return {
-      drawImage: vi.fn(),
-      toDataURL: (type, quality) => {
-        const data = '/webp;base64,UklGRh4AAABXRUJQVlA4TBEAAAAvAAAAAAfQ//73v/+BiA==';
-        return `data:${type};${data}`;
-      },
-    };
+    info: () => {},
+    warn: () => {},
+    error: () => {}
   }
 };
 
-globalThis.createImageBitmap = vi.fn().mockResolvedValue({
-  width: 100,
-  height: 100,
-  close: vi.fn(),
+globalThis.$ = () => {
+  return {
+    on: () => {},
+    find: () => ({ last: () => ({ append: () => {} }) }),
+    prop: () => ({ find: () => ({ removeClass: () => ({ addClass: () => {} }) }) })
+  };
+};
+
+globalThis.Hooks = {
+  on: () => {}
+};
+
+globalThis.createImageBitmap = async () => ({
+  width: 100, height: 100, close: () => {}
 });
 
-globalThis.atob = (str) => Buffer.from(str, 'base64').toString('binary');
-
-globalThis.Blob = globalThis.Blob || class Blob {
-  constructor(parts, options) {
-    this._buffer = Buffer.concat(parts.map(p =>
-      Buffer.isBuffer(p) ? p : Buffer.from(p)
-    ));
-    this.type = options?.type || '';
-    this.size = this._buffer.length;
-  }
-  async arrayBuffer() {
-    return this._buffer.buffer;
-  }
+globalThis.OffscreenCanvas = class {
+  constructor(w, h) { this.width = w; this.height = h; }
+  getContext() { return { drawImage: () => {} }; }
+  convertToBlob() { return Promise.resolve(new Blob(['compressed'], { type: 'image/webp' })); }
 };

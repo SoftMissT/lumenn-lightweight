@@ -1,10 +1,10 @@
-import { registerSettings } from './settings.mjs';
-import { registerUploadHook } from './upload-hook.mjs';
-import { openOptimizerDialog } from './ui.mjs';
+import { registerSettings } from "./settings.mjs";
+import { registerUploadHook } from "./upload-hook.mjs";
+import { openOptimizerDialog, LumennBatchMenuApp } from "./ui.mjs";
 
-const MODULE_ID = 'lumenn-lightweight';
+const MODULE_ID = "lumenn-lightweight";
 
-Hooks.on('init', () => {
+Hooks.on("init", () => {
   registerSettings();
 
   game.modules.get(MODULE_ID).api = {
@@ -14,13 +14,14 @@ Hooks.on('init', () => {
   console.log(`${MODULE_ID}: Initialized.`);
 });
 
-Hooks.on('ready', () => {
+Hooks.on("ready", () => {
   registerUploadHook();
   console.log(`${MODULE_ID}: Upload hook registered.`);
 });
 
-Hooks.on('renderSidebarTab', (app, html) => {
-  if (app.options.id !== 'settings') return;
+Hooks.on("renderSidebarTab", (app, html) => {
+  if (app.options.id !== "settings") return;
+  if (!game.user?.isGM) return; // RF-003 / RF-011
 
   const button = $(`
     <button class="lumenn-settings-btn" data-action="lumenn-optimizer">
@@ -28,6 +29,6 @@ Hooks.on('renderSidebarTab', (app, html) => {
     </button>
   `);
 
-  button.on('click', () => openOptimizerDialog());
-  html.find('.settings-section').last().append(button);
+  button.on("click", () => openOptimizerDialog());
+  html.find(".settings-section").last().append(button);
 });

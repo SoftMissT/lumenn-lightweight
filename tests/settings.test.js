@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { registerSettings, getQuality, getOverridePercent, getAutoOptimize, getSkipExisting, SETTING_KEYS } from '../src/settings.mjs';
+import { 
+  registerSettings, 
+  getQuality, 
+  getOverridePercent, 
+  getAutoOptimize, 
+  getSkipExisting 
+} from '../src/settings.mjs';
 
 describe('settings', () => {
   beforeEach(() => {
@@ -8,16 +14,15 @@ describe('settings', () => {
 
   it('registers all settings', () => {
     registerSettings();
-
-    expect(game.settings._store[`lumenn-lightweight.${SETTING_KEYS.QUALITY}`]).toBe(0.75);
-    expect(game.settings._store[`lumenn-lightweight.${SETTING_KEYS.OVERRIDE_PERCENT}`]).toBe(25);
-    expect(game.settings._store[`lumenn-lightweight.${SETTING_KEYS.AUTO_OPTIMIZE}`]).toBe(true);
-    expect(game.settings._store[`lumenn-lightweight.${SETTING_KEYS.SKIP_EXISTING}`]).toBe(false);
+    expect(game.settings._store['lumenn-lightweight.compressionQuality']).toBe(0.85);
+    expect(game.settings._store['lumenn-lightweight.overridePercent']).toBe(25);
+    expect(game.settings._store['lumenn-lightweight.uploadHookEnabled']).toBe(true);
+    expect(game.settings._store['lumenn-lightweight.skipThresholdBytes']).toBe(102400);
   });
 
   it('getQuality returns default', () => {
     registerSettings();
-    expect(getQuality()).toBe(0.75);
+    expect(getQuality()).toBe(0.85);
   });
 
   it('getOverridePercent returns default', () => {
@@ -30,8 +35,8 @@ describe('settings', () => {
     expect(getAutoOptimize()).toBe(true);
   });
 
-  it('getSkipExisting returns default', () => {
+  it('getSkipExisting returns default based on threshold', () => {
     registerSettings();
-    expect(getSkipExisting()).toBe(false);
+    expect(getSkipExisting()).toBe(true);
   });
 });

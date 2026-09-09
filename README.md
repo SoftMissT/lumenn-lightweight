@@ -12,11 +12,11 @@
 
 ## Funcionalidades
 
-- **Compressão WebP automática** — converte imagens ao upload via FilePicker
-- **Modo lote** — otimiza toda a biblioteca de uma vez
-- **Configurações flexíveis** — qualidade, economia mínima, auto-otimizar
-- **Não-destrutivo** — arquivos originais nunca são apagados sem confirmação
-- **i18n** — Inglês e Português (Brasil)
+- **Compressão WebP automática** converte imagens ao upload via FilePicker
+- **Modo lote** otimiza toda a biblioteca de uma vez
+- **Configurações flexíveis** qualidade, economia mínima, auto-otimizar
+- **Não-destrutivo** arquivos originais nunca são apagados sem confirmação
+- **i18n** Inglês e Português (Brasil)
 
 ## Compatibilidade
 
@@ -32,9 +32,11 @@
 ## Uso
 
 ### Upload Automático
+
 Ativado por padrão. Ao enviar uma imagem via FilePicker, ela é automaticamente comprimida para WebP.
 
 ### Modo Lote
+
 1. Abra as Configurações do Módulo
 2. Clique em **Otimizador de Imagens**
 3. Ajuste a qualidade e economia mínima
@@ -43,17 +45,17 @@ Ativado por padrão. Ao enviar uma imagem via FilePicker, ela é automaticamente
 ### API
 
 ```javascript
-game.modules.get('lumenn-lightweight').api.openOptimizerDialog();
+game.modules.get("lumenn-lightweight").api.openOptimizerDialog();
 ```
 
 ## Configurações
 
-| Config | Tipo | Default | Descrição |
-|--------|------|---------|-----------|
-| Qualidade | Slider 0.1–1.0 | 0.75 | Qualidade da compressão WebP |
-| Economia Mínima % | Slider 0–90 | 25 | Porcentagem mínima de redução para substituir |
-| Auto-otimizar | Boolean | true | Comprimir ao upload via FilePicker |
-| Pular WebP existente | Boolean | false | Pular arquivos que já têm .webp |
+| Config               | Tipo           | Default | Descrição                                     |
+| -------------------- | -------------- | ------- | --------------------------------------------- |
+| Qualidade            | Slider 0.1–1.0 | 0.75    | Qualidade da compressão WebP                  |
+| Economia Mínima %    | Slider 0–90    | 25      | Porcentagem mínima de redução para substituir |
+| Auto-otimizar        | Boolean        | true    | Comprimir ao upload via FilePicker            |
+| Pular WebP existente | Boolean        | false   | Pular arquivos que já têm .webp               |
 
 ## Desenvolvimento
 

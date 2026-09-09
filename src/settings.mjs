@@ -1,72 +1,84 @@
-const MODULE_ID = 'lumenn-lightweight';
-
-export const SETTING_KEYS = {
-  QUALITY: 'quality',
-  OVERRIDE_PERCENT: 'overridePercent',
-  AUTO_OPTIMIZE: 'autoOptimize',
-  SKIP_EXISTING: 'skipExisting',
-};
+const MODULE_ID = "lumenn-lightweight";
+import { LumennBatchMenuApp } from "./ui.mjs";
 
 export function registerSettings() {
-  game.settings.register(MODULE_ID, SETTING_KEYS.QUALITY, {
-    name: `${MODULE_ID}.settings.quality.name`,
-    hint: `${MODULE_ID}.settings.quality.hint`,
-    scope: 'world',
-    config: true,
-    type: Number,
-    default: 0.75,
-    range: {
-      min: 0.1,
-      max: 1.0,
-      step: 0.05,
-    },
-  });
-
-  game.settings.register(MODULE_ID, SETTING_KEYS.OVERRIDE_PERCENT, {
-    name: `${MODULE_ID}.settings.overridePercent.name`,
-    hint: `${MODULE_ID}.settings.overridePercent.hint`,
-    scope: 'world',
-    config: true,
-    type: Number,
-    default: 25,
-    range: {
-      min: 0,
-      max: 90,
-      step: 5,
-    },
-  });
-
-  game.settings.register(MODULE_ID, SETTING_KEYS.AUTO_OPTIMIZE, {
+  // Alias de backward compatibility ou novas chaves
+  game.settings.register(MODULE_ID, "uploadHookEnabled", {
     name: `${MODULE_ID}.settings.autoOptimize.name`,
     hint: `${MODULE_ID}.settings.autoOptimize.hint`,
-    scope: 'world',
+    scope: "world",
     config: true,
     type: Boolean,
     default: true,
+    restricted: true,
   });
 
-  game.settings.register(MODULE_ID, SETTING_KEYS.SKIP_EXISTING, {
-    name: `${MODULE_ID}.settings.skipExisting.name`,
-    hint: `${MODULE_ID}.settings.skipExisting.hint`,
-    scope: 'world',
+  game.settings.register(MODULE_ID, "compressionQuality", {
+    name: `${MODULE_ID}.settings.quality.name`,
+    hint: `${MODULE_ID}.settings.quality.hint`,
+    scope: "world",
     config: true,
-    type: Boolean,
-    default: false,
+    type: Number,
+    range: { min: 0.1, max: 1.0, step: 0.05 },
+    default: 0.85,
+    restricted: true,
+  });
+
+  game.settings.register(MODULE_ID, "overridePercent", {
+    name: `${MODULE_ID}.settings.overridePercent.name`,
+    hint: `${MODULE_ID}.settings.overridePercent.hint`,
+    scope: "world",
+    config: true,
+    type: Number,
+    range: { min: 0, max: 90, step: 5 },
+    default: 25,
+    restricted: true,
+  });
+
+  game.settings.register(MODULE_ID, "skipThresholdBytes", {
+    name: `${MODULE_ID}.settings.skipExisting.name`, // Reaproveitando chave i18n
+    hint: `${MODULE_ID}.settings.skipExisting.hint`,
+    scope: "world",
+    config: true,
+    type: Number,
+    default: 102400, // 100KB
+    restricted: true,
+  });
+
+  // Alias settings for backward compatibility if needed, or we just map old getter functions to new keys
+
+  // Register batch menu (RF-003, RF-006, RF-011)
+  game.settings.registerMenu(MODULE_ID, "batchMenu", {
+    name: `${MODULE_ID}.settings.button`,
+    label: `${MODULE_ID}.settings.button`,
+    icon: "fas fa-compress-alt",
+    type: LumennBatchMenuApp,
+    restricted: true,
   });
 }
 
-export function getQuality() {
-  return game.settings.get(MODULE_ID, SETTING_KEYS.QUALITY);
-}
-
-export function getOverridePercent() {
-  return game.settings.get(MODULE_ID, SETTING_KEYS.OVERRIDE_PERCENT);
+export function getUploadHookEnabled() {
+  return game.settings.get(MODULE_ID, "uploadHookEnabled");
 }
 
 export function getAutoOptimize() {
-  return game.settings.get(MODULE_ID, SETTING_KEYS.AUTO_OPTIMIZE);
+  // backward compat alias
+  return getUploadHookEnabled();
+}
+
+export function getQuality() {
+  return game.settings.get(MODULE_ID, "compressionQuality");
+}
+
+export function getOverridePercent() {
+  return game.settings.get(MODULE_ID, "overridePercent");
+}
+
+export function getSkipThresholdBytes() {
+  return game.settings.get(MODULE_ID, "skipThresholdBytes");
 }
 
 export function getSkipExisting() {
-  return game.settings.get(MODULE_ID, SETTING_KEYS.SKIP_EXISTING);
+  // backward compat alias
+  return getSkipThresholdBytes() > 0;
 }

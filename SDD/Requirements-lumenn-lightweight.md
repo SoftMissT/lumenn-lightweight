@@ -3,180 +3,115 @@ type: requirements
 status: draft
 created: 2026-08-30
 updated: 2026-08-30
-tags: [sdd, requirements, foundry-vtt, lumenn-lightweight]
+tags: [sdd, requirements, product-requirements, foundry-vtt, lumenn-lightweight]
 ---
 
 # Requirements: lumenn-lightweight
 
-> [!abstract] Propósito
-> Requisitos funcionais (RF) e não-funcionais (RNF) do módulo. Cada requisito é identificável, rastreável e verificável. Todo Blueprint e Spec subsequente deve referenciar estes IDs.
+> [!info] Geração do conteúdo
+> Skill `prd` não disponível neste ambiente — conteúdo gerado seguindo o template local equivalente de `sdd-obsidian/templates/requirements.md`, conforme previsto pela própria skill quando uma skill delegada não está presente. Esta página é o **envelope Obsidian**: aplica frontmatter, requisitos em EARS e os wikilinks de rastreabilidade. Declara conformidade com a [[Constitution-lumenn-lightweight]].
+
+## Clarifications
+> [!question] Perguntas respondidas no passo de Clarify
+- [x] Onde o usuário aciona o modo lote? → Via Settings do módulo, abrindo um `DialogV2` (`foundry.applications.api.DialogV2`) para seleção e confirmação.
+- [x] O hook de upload deve avisar o usuário? → Sim, notificação relâmpago com economia de espaço (ex.: "Imagem otimizada: 2.3MB → 340KB").
+- [x] O módulo funciona para jogadores comuns? → Não. Restrito a GM/Assistente (`isGM` ou permissão equivalente), alinhado com o padrão dos módulos concorrentes pesquisados.
+
+## 1. Introdução e Visão Geral
+> [!abstract] Resumo Executivo
+> `lumenn-lightweight` é um módulo Foundry VTT que reduz o tamanho de imagens (Atores, Itens, Cenas) sem perda perceptível de qualidade, cobrindo tanto bibliotecas já existentes (modo lote) quanto novos uploads (hook automático via `libWrapper`). Resolve um gap real: módulos concorrentes (Geano's Scene Optimizer, Media Optimizer) cobrem cenas e/ou áudio, mas nenhum intercepta o upload em si nem cobre Atores/Itens de forma unificada e simples.
+
+### 1.1. Problema
+Mundos Foundry VTT acumulam imagens pesadas (PNG/JPEG não otimizados) em Atores, Itens e Cenas, aumentando tempo de carregamento e uso de banda para GM e jogadores. As soluções existentes exigem limpeza manual periódica (modo lote apenas) ou cobrem só parte dos tipos de asset.
+
+### 1.2. Visão
+Um módulo que resolve o problema de peso de imagem em dois momentos — na origem (upload) e na limpeza retroativa (lote) — com a menor complexidade possível de manter e contribuir (GPL-3.0, JS puro).
+
+## 2. Metas e Objetivos
+- **Meta 1**: Reduzir o tamanho de arquivo de imagens otimizadas em pelo menos 40% em relação ao original, mantendo qualidade visualmente aceitável (parâmetro configurável pelo usuário).
+- **Meta 2**: Cobrir 100% dos três tipos de asset de imagem do v1 (Atores, Itens, Cenas) — gap explícito deixado pelos concorrentes pesquisados.
+- **Meta 3**: Módulo instalável e funcional sem exigir configuração técnica além da instalação padrão de módulo Foundry (manifest URL) + dependência declarada (`libWrapper`).
+
+## 3. User Stories
+
+### US-001: Otimização automática no upload
+**Descrição**: Como Game Master, eu quero que imagens sejam otimizadas automaticamente quando eu faço upload, para que eu não precise lembrar de otimizar manualmente depois.
+
+**Critérios de Aceitação**:
+- [ ] Ao subir uma imagem (PNG/JPEG) via `FilePicker`, o arquivo salvo é convertido para WebP conforme configuração de qualidade.
+- [ ] Uma notificação relâmpago mostra o tamanho antes/depois.
+- [ ] O usuário pode desabilitar esse comportamento via Settings.
+
+### US-002: Limpeza de biblioteca existente (modo lote)
+**Descrição**: Como Game Master, eu quero otimizar em lote as imagens já existentes no meu mundo, para reduzir o peso de uma biblioteca já acumulada sem precisar reenviar arquivo por arquivo.
+
+**Critérios de Aceitação**:
+- [ ] Um `DialogV2` acessível via Settings lista assets não otimizados (Atores, Itens, Cenas).
+- [ ] O usuário pode selecionar quais otimizar e disparar o processamento em lote.
+- [ ] Uma barra/indicador de progresso é exibido durante o processamento.
+- [ ] Arquivos originais não são apagados automaticamente (não-destrutivo, conforme Constitution Artigo III).
+
+### US-003: Controle de qualidade
+**Descrição**: Como Game Master, eu quero ajustar o nível de compressão, para equilibrar economia de espaço e qualidade visual conforme minha necessidade.
+
+**Critérios de Aceitação**:
+- [ ] Setting numérico (slider 0.1–1.0) controla a qualidade WebP, com valor padrão sensato (a definir no Blueprint, informado por prática de mercado — Geano's usa 0.85 como default).
+
+## 4. Requisitos Funcionais (notação EARS)
+
+### Ubiquitous
+- **RF-001**: The system shall convert optimized images to WebP format.
+- **RF-002**: The system shall preserve the original file, marking it as available for manual cleanup rather than deleting it automatically.
+- **RF-003**: The system shall restrict access to optimization features (upload hook toggle, batch dialog) to users with Gamemaster or Assistant Gamemaster permission.
+
+### Event-Driven
+- **RF-004**: When a user uploads an image via FilePicker and the upload-hook setting is enabled, the system shall intercept the upload via `libWrapper` and convert the file to WebP before it is saved.
+- **RF-005**: When an image is optimized via the upload hook, the system shall display a notification showing the size before and after optimization.
+- **RF-006**: When the Game Master opens the batch optimization dialog, the system shall list all unoptimized images across Actors, Items, and Scenes.
+- **RF-007**: When the Game Master confirms a batch optimization selection, the system shall process each selected image and display progress feedback.
+
+### State-Driven
+- **RF-008**: While batch processing is in progress, the system shall display a progress indicator reflecting the number of files processed.
+
+### Unwanted Behavior
+- **RF-009**: If a file is already in WebP format and meets the configured quality/size threshold, then the system shall skip it and not reprocess it.
+- **RF-010**: If the upload-hook setting is disabled, then the system shall not intercept `FilePicker.upload` and shall preserve default Foundry behavior.
+- **RF-011**: If a user without Gamemaster/Assistant permission attempts to access the batch dialog or upload-hook settings, then the system shall deny access.
+
+### Optional Feature
+- **RF-012**: Where the `libWrapper` module is not installed or active, the system shall disable the upload-hook feature and notify the Game Master of the missing dependency, while keeping the batch mode fully functional.
+
+## 5. Requisitos Não Funcionais
+
+| ID | Descrição | Categoria | Prioridade |
+| :--- | :--- | :--- | :--- |
+| RNF-001 | The system shall achieve at least 40% file size reduction on typical unoptimized PNG/JPEG assets at default quality settings. | Performance | Alta |
+| RNF-002 | The system shall not freeze the Foundry UI thread during batch processing of large libraries (processing shall be chunked/async). | Performance | Alta |
+| RNF-003 | The system shall function on Foundry VTT v13.350 through v14.999. | Compatibilidade | Crítica |
+| RNF-004 | The system's codebase shall be written in plain JavaScript (ES Modules), with no TypeScript or build step required to run. | Manutenibilidade | Alta |
+| RNF-005 | The system shall have automated test coverage (vitest) for all pure functions (compression, size calculation) before being considered feature-complete. | Qualidade | Alta |
+
+## 6. Não-Objetivos (Out of Scope)
+- Não será implementado: otimização de vídeo (fica para v2, ver [[Constitution-lumenn-lightweight#Artigo VI]]).
+- Não será implementado: otimização de áudio (fora do escopo declarado do projeto; diferencial do módulo é imagem+vídeo, não áudio).
+- Não será implementado: acesso de jogadores comuns (não-GM) às funcionalidades do módulo.
+- Não será implementado: exclusão automática dos arquivos originais após otimização.
+
+## 7. Glossário
+- **Modo Lote**: Fluxo de otimização retroativa de assets já existentes no mundo, disparado manualmente pelo GM via Settings/DialogV2.
+- **Hook de Upload**: Interceptação do método `FilePicker.upload` via `libWrapper`, otimizando imagens no momento do envio.
+- **Asset não otimizado**: Imagem em formato PNG/JPEG (não-WebP) ou WebP acima do limiar de qualidade/tamanho configurado.
+
+## 8. Perguntas Abertas
+- [ ] Qual o valor padrão exato do slider de qualidade (0.1–1.0)? A definir no Blueprint, usando 0.85 (padrão do Geano's) como ponto de partida sujeito a validação.
+- [x] O que constitui "GM ou Assistente" tecnicamente na API do Foundry? → Resolvido: `game.user.isGM` (getter em `BaseUser`) testa nativamente GAMEMASTER OU ASSISTANT. Fonte: `foundryvtt.com/api/classes/foundry.documents.BaseUser.html` (API v13 oficial), verificado 2026-08-30. RF-003/RF-011 usam `game.user.isGM` diretamente.
 
 ---
-
-## Requisitos Funcionais
-
-### RF-001 — Compressão WebP de imagem individual
-
-**Como** GM ou jogador,
-**Quero** que imagens enviadas via FilePicker sejam comprimidas para WebP automaticamente,
-**Para que** o tamanho dos arquivos seja reduzido sem perda perceptível de qualidade.
-
-**Critérios de aceitação:**
-- [ ] Arquivos PNG, JPG e JPEG são convertidos para WebP
-- [ ] Qualidade configurável via setting (0.1–1.0, default 0.75)
-- [ ] Arquivo original NÃO é apagado antes de confirmar que o WebP foi criado com sucesso
-- [ ] Arquivos que não atingem o threshold de economia (default 25%) são ignorados
-- [ ] Notificação ao usuário com nome do arquivo e percentual de economia
-
----
-
-### RF-002 — Interceptação de upload via libWrapper
-
-**Como** desenvolvedor do módulo,
-**Quero** que o hook de upload intercepte `FilePicker.prototype.upload` via libWrapper,
-**Para que** a compressão ocorra de forma transparente ao usuário.
-
-**Critérios de aceitação:**
-- [ ] `libWrapper.register` é chamado no hook `ready` com target `FilePicker.prototype.upload`
-- [ ] Tipo de wrapper: `WRAPPER` (chama original, pode modificar argumentos)
-- [ ] Se libWrapper não está disponível, log de warning e funcionamento sem hook
-- [ ] Upload de arquivos não-imagem passa direto para o wrapper original
-- [ ] Erros de compressão não quebram o upload original (fallback para upload sem compressão)
-
----
-
-### RF-003 — Modo lote (batch)
-
-**Como** GM,
-**Quero** otimizar todas as imagens de um diretório de uma vez,
-**Para que** eu não precise fazer upload uma por uma.
-
-**Critérios de aceitação:**
-- [ ] Função `optimizeDirectory(path, options)` percorre diretório recursivamente (se `recursive: true`)
-- [ ] Processa apenas arquivos PNG, JPG, JPEG
-- [ ] Respeita configuração `skipExisting` (pula se .webp já existe no mesmo diretório)
-- [ ] Respeita configuração `overridePercent` (não substitui se economia < threshold)
-- [ ] Atualiza referênciasFoundry (`img` de Documents) após renomeação
-- [ ] Retorna objeto de resultados: `{ total, optimized, skipped, failed, bytesSaved }`
-- [ ] Callback `onProgress` para feedback visual
-
----
-
-### RF-004 — Configurações do módulo
-
-**Como** GM,
-**Quero** configurar parâmetros de compressão via Interface do Foundry,
-**Para que** eu controle qualidade e comportamento do módulo.
-
-**Critérios de aceitação:**
-- [ ] Settings registrados no hook `init` via `game.settings.register`
-- [ ] `quality`: Number, range 0.1–1.0, step 0.05, default 0.75
-- [ ] `overridePercent`: Number, range 0–90, step 5, default 25
-- [ ] `autoOptimize`: Boolean, default true
-- [ ] `skipExisting`: Boolean, default false
-- [ ] Todos os labels usam i18n (`${MODULE_ID}.settings.*`)
-
----
-
-### RF-005 — Interface do usuário (Dialog)
-
-**Como** GM,
-**Quero** uma interface para executar otimização em lote e ajustar configurações,
-**Para que** eu não precise usar comandos de linha.
-
-**Critérios de aceitação:**
-- [ ] Dialog renderiza via `Dialog` do Foundry (Application v1)
-- [ ] Slider de qualidade com display do valor atual
-- [ ] Slider de economia mínima com display do valor atual
-- [ ] Checkbox auto-otimizar
-- [ ] Checkbox pular existente
-- [ ] Botão "Otimizar Biblioteca" que executa batch
-- [ ] Barra de progresso durante processamento
-- [ ] Notificação ao concluír com resumo
-
----
-
-### RF-006 — i18n (internacionalização)
-
-**Como** usuário de diferentes idiomas,
-**Quero** que a interface esteja disponível em inglês e português,
-**Para que** eu entenda as opções sem traduzir manualmente.
-
-**Critérios de aceitação:**
-- [ ] `lang/en.json` com todas as strings
-- [ ] `lang/pt-BR.json` com todas as strings
-- [ ] Todos os textos de UI usam `game.i18n.localize()`
-- [ ] module.json declara ambos os idiomas
-
----
-
-### RF-007 — Referências Foundry
-
-**Como** GM,
-**Quero** que quando uma imagem é renomeada de .png para .webp, todas as referências no World sejam atualizadas,
-**Para que** atores, itens e cenas continuem apontando para a imagem correta.
-
-**Critérios de aceitação:**
-- [ ] `updateReferences(oldPath, newPath)` varre todos os packs e Documents
-- [ ] Atualiza campo `img` de Actors, Items, Scenes, Tokens
-- [ ] Não quebra referências que não apontam para o arquivo renomeado
-- [ ] Funciona tanto no modo lote quanto no upload individual
-
----
-
-## Requisitos Não-Funcionais
-
-### RNF-001 — Compatibilidade
-
-- Foundry VTT v13.350 até v14.999
-- NÃO depende de nenhum módulo além de libWrapper
-- Funciona em qualquer sistema (system-agnostic)
-
-### RNF-002 — Performance
-
-- Compressão de uma imagem individual: < 500ms (imagem típica de 2MB)
-- Modo lote: processamento sequencial (não paralelo) para evitar sobrecarga de memória
-- Logging: apenas em modo debug ou quando há ação significativa
-
-### RNF-003 — Segurança
-
-- Nunca sobrescrever arquivo original sem ter o WebP confirmado
-- Nunca apagar arquivos que não foram criados pelo módulo
-- Tratar erros de I/O sem crashar o Foundry
-
-### RNF-004 — Manutenibilidade
-
-- Um responsabilidade por arquivo (Constituição Artigo III)
-- Código legível sem necessidade de bundler (Constituição Artigo I)
-- Testes para toda função pura antes de merge (Constituição Artigo II)
-
-### RNF-005 — Distribuição
-
-- module.json com `manifest` e `download` URLs apontando para GitHub Releases
-- ZIP contém apenas arquivos necessários (sem node_modules, sem testes, sem SDD)
-- Licença GPL-3.0 em todos os arquivos relevantes
-
----
-
-## Rastreabilidade
-
-| RF | Implementado em | Testado em |
-|----|----------------|------------|
-| RF-001 | `src/compression.mjs` | `tests/compression.test.js` |
-| RF-002 | `src/upload-hook.mjs` | `tests/upload-hook.test.js` |
-| RF-003 | `src/batch.mjs` | `tests/batch.test.js` |
-| RF-004 | `src/settings.mjs` | `tests/settings.test.js` |
-| RF-005 | `src/ui.mjs` | (manual) |
-| RF-006 | `lang/*.json` | (manual) |
-| RF-007 | `src/paths.mjs` | `tests/paths.test.js` |
-
----
-
 **Conformidade**: este documento adere à [[Constitution-lumenn-lightweight]].
 
 **Documentos Relacionados**:
 - [[Constitution-lumenn-lightweight]]
-- [[Research-lumenn-lightweight]]
 - [[PDR-lumenn-lightweight]]
+- [[Research-lumenn-lightweight]]
 - [[Blueprint-lumenn-lightweight]]
 - [[Specs-lumenn-lightweight]]

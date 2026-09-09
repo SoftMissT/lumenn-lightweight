@@ -2,12 +2,14 @@ export function resolveFoundryReference(absPath) {
   const dataPath = getFoundryDataPath();
   if (!absPath.startsWith(dataPath)) return null;
 
-  const relative = absPath.slice(dataPath.length).replace(/^[/\\]/, '');
+  const relative = absPath.slice(dataPath.length).replace(/^[/\\]/, "");
   return relative;
 }
 
 export function getFoundryDataPath() {
-  return game.data?.path ?? game.packs?.values()?.next()?.value?.metadata?.path ?? '';
+  return (
+    game.data?.path ?? game.packs?.values()?.next()?.value?.metadata?.path ?? ""
+  );
 }
 
 export async function updateReferences(oldPath, newPath) {
@@ -15,9 +17,7 @@ export async function updateReferences(oldPath, newPath) {
   const newRef = resolveFoundryReference(newPath);
   if (!oldRef || !newRef) return;
 
-  const collections = [
-    ...game.packs.values(),
-  ];
+  const collections = [...game.packs.values()];
 
   for (const pack of collections) {
     const documents = await pack.getDocuments();
@@ -32,11 +32,11 @@ export async function updateReferences(oldPath, newPath) {
 
 function updateDocumentReferences(doc, oldRef, newRef) {
   let changed = false;
-  const fields = ['img', 'prototypeToken.texture.src', 'token.img'];
+  const fields = ["img", "prototypeToken.texture.src", "token.img"];
 
   for (const field of fields) {
     const value = getProperty(doc, field);
-    if (typeof value === 'string' && value.includes(oldRef)) {
+    if (typeof value === "string" && value.includes(oldRef)) {
       setProperty(doc, field, value.replace(oldRef, newRef));
       changed = true;
     }
@@ -46,11 +46,11 @@ function updateDocumentReferences(doc, oldRef, newRef) {
 }
 
 function getProperty(obj, path) {
-  return path.split('.').reduce((current, key) => current?.[key], obj);
+  return path.split(".").reduce((current, key) => current?.[key], obj);
 }
 
 function setProperty(obj, path, value) {
-  const keys = path.split('.');
+  const keys = path.split(".");
   const last = keys.pop();
   const target = keys.reduce((current, key) => current?.[key], obj);
   if (target && last) target[last] = value;

@@ -1,20 +1,45 @@
-import { compressImage, isImageFile, getWebpFilename, shouldReplace } from './compression.mjs';
-import { getQuality, getOverridePercent, getAutoOptimize } from './settings.mjs';
-import { resolveFoundryReference, updateReferences } from './paths.mjs';
+import {
+  compressImage,
+  isImageFile,
+  getWebpFilename,
+  shouldReplace,
+} from "./compression.mjs";
+import {
+  getUploadHookEnabled,
+  getQuality,
+  getOverridePercent,
+  getSkipThresholdBytes,
+} from "./settings.mjs";
+import { CustomNotification } from "./notification.mjs";
 
-const MODULE_ID = 'lumenn-lightweight';
+const MODULE_ID = "lumenn-lightweight";
 
 export function registerUploadHook() {
-  if (typeof libWrapper === 'undefined') {
-    console.warn(`${MODULE_ID}: libWrapper not found. Upload hook not registered.`);
+  if (
+    typeof libWrapper === "undefined" ||
+    !game.modules?.get("lib-wrapper")?.active
+  ) {
+    console.warn(
+      `${MODULE_ID}: libWrapper not found or active. Upload hook not registered.`,
+    );
+    if (game.user?.isGM) {
+      ui.notifications?.warn(
+        game.i18n?.localize(`${MODULE_ID}.notifications.noLibWrapper`) ||
+          "libWrapper not active",
+      );
+    }
     return;
   }
 
   libWrapper.register(
     MODULE_ID,
-    'FilePicker.prototype.upload',
+    "FilePicker.upload",
     async function (wrapped, source, path, file, body, options) {
-      if (!getAutoOptimize()) {
+      if (!game.user?.isGM) {
+        return wrapped(source, path, file, body, options);
+      }
+
+      if (!getUploadHookEnabled()) {
         return wrapped(source, path, file, body, options);
       }
 
@@ -25,31 +50,54 @@ export function registerUploadHook() {
       try {
         const quality = getQuality();
         const overridePercent = getOverridePercent();
-        const originalSize = file.size;
+        const skipThresholdBytes = getSkipThresholdBytes();
 
-        const compressed = await compressImage(file, quality);
+        const compressed = await compressImage(file, quality, {
+          skipThresholdBytes,
+        });
 
-        if (!shouldReplace(originalSize, compressed.size, overridePercent)) {
-          console.log(`${MODULE_ID}: ${file.name} — compression did not reduce size enough, skipping.`);
+        if (
+          compressed.skipped ||
+          !shouldReplace(
+            compressed.originalSize,
+            compressed.newSize,
+            overridePercent,
+          )
+        ) {
+          console.log(
+            `${MODULE_ID}: ${file.name} - skipped or did not reduce size enough.`,
+          );
           return wrapped(source, path, file, body, options);
         }
 
         const newName = getWebpFilename(file.name);
-        const compressedFile = new File([compressed], newName, { type: 'image/webp' });
+        const compressedFile = new File([compressed.blob], newName, {
+          type: "image/webp",
+        });
 
-        const result = await wrapped(source, path, compressedFile, body, options);
-
-        const savedPercent = ((originalSize - compressed.size) / originalSize * 100).toFixed(1);
-        ui.notifications.info(
-          `${MODULE_ID}: ${file.name} → ${newName} (−${savedPercent}%)`
+        const result = await wrapped(
+          source,
+          path,
+          compressedFile,
+          body,
+          options,
         );
+
+        CustomNotification.show({
+          originalSize: compressed.originalSize,
+          newSize: compressed.newSize,
+          assetName: file.name,
+        });
 
         return result;
       } catch (err) {
-        console.error(`${MODULE_ID}: Compression failed for ${file.name}`, err);
+        console.warn(
+          `${MODULE_ID}: Compression failed for ${file.name}, uploading original.`,
+          err,
+        );
         return wrapped(source, path, file, body, options);
       }
     },
-    'WRAPPER'
+    "WRAPPER",
   );
 }
