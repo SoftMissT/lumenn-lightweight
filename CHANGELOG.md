@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.4] - 2026-09-09
+
+### Fixed
+
+- Botão do otimizador agora é montado somente dentro do painel de settings do Lumenn.
+- Removido o fallback que anexava o botão ao rodapé global da janela.
+- Template do dialog em lote agora renderiza um único elemento raiz, conforme exigido pelo `ApplicationV2`.
+- Adicionados testes de regressão para o ponto de montagem e a raiz única do template.
+- Nomes URL-encoded agora são decodificados antes do upload WebP, evitando arquivos físicos com `%20`/`%2C` e referências 404.
+
 ## [0.0.3] - 2026-09-09
 
 ### Fixed
@@ -14,6 +24,7 @@ All notable changes to this project will be documented in this file.
 ## [0.0.2] - 2026-09-09
 
 ### Changed
+
 - Refatoração da UI do Otimizador em Lote para usar a API nativa `ApplicationV2` (Foundry V13+).
 - Dialog utiliza `HandlebarsApplicationMixin` para compatibilidade estrita e limpa com o padrão V12+.
 - Correção de exclusão do `.zip` no gitignore e compatibilidade `verified: 14`.

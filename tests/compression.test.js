@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   isImageFile,
   isWebpFile,
+  decodeFoundryFilename,
   getWebpFilename,
   shouldReplace,
   compressImage,
@@ -32,6 +33,22 @@ describe("getWebpFilename", () => {
   it("preserves dotted filenames and directories", () => {
     expect(getWebpFilename("assets/hero.v2.final.png")).toBe(
       "assets/hero.v2.final.webp",
+    );
+  });
+});
+
+describe("decodeFoundryFilename", () => {
+  it("decodes URL-encoded names before upload", () => {
+    expect(
+      decodeFoundryFilename(
+        "Serpente%20Azul-Marinho%2C%20Fase%20Azul-Marinho.png",
+      ),
+    ).toBe("Serpente Azul-Marinho, Fase Azul-Marinho.png");
+  });
+
+  it("does not allow encoded path separators inside a filename", () => {
+    expect(decodeFoundryFilename("portrait%2Fescape.png")).toBe(
+      "portrait_escape.png",
     );
   });
 });

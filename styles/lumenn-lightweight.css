@@ -86,5 +86,8 @@
   width: 100%;
   margin-top: 8px;
   padding: 6px 12px;
-  text-align: left;
+}
+
+.lumenn-optimizer-launcher {
+  margin-top: 16px;
 }

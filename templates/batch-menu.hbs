@@ -1,26 +1,46 @@
-<p>{{localize "lumenn-lightweight.dialog.scanMessage" count=assets.length quality=currentQuality}}</p>
+<section class="lumenn-batch-content">
+  <p>{{localize
+      "lumenn-lightweight.dialog.scanMessage"
+      count=assets.length
+      quality=currentQuality
+    }}</p>
 
-{{#if assets.length}}
-<div class="lumenn-asset-list">
-  {{#each assets as |asset index|}}
-  <div class="checkbox">
-    <input type="checkbox" name="assets" id="l_asset_{{index}}" value="{{index}}" checked>
-    <label for="l_asset_{{index}}" title="{{asset.imgPath}}">{{asset.type}} - {{asset.name}}</label>
-  </div>
-  {{/each}}
-</div>
+  {{#if assets.length}}
+    <div class="lumenn-asset-list">
+      {{#each assets as |asset index|}}
+        <div class="checkbox">
+          <input
+            type="checkbox"
+            name="assets"
+            id="l_asset_{{index}}"
+            value="{{index}}"
+            checked
+          />
+          <label
+            for="l_asset_{{index}}"
+            title="{{asset.imgPath}}"
+          >{{asset.type}} - {{asset.name}}</label>
+        </div>
+      {{/each}}
+    </div>
 
-<div class="form-group" style="margin-top: 1em;">
-  <button type="button" class="lumenn-batch-btn" data-action="optimize">
-    <i class="fas fa-compress-alt"></i>
-    {{localize "lumenn-lightweight.dialog.batchOptimize"}}
-  </button>
-</div>
+    <div class="form-group" style="margin-top: 1em;">
+      <button type="button" class="lumenn-batch-btn" data-action="optimize">
+        <i class="fas fa-compress-alt"></i>
+        {{localize "lumenn-lightweight.dialog.batchOptimize"}}
+      </button>
+    </div>
 
-<div class="lumenn-progress" style="display:none; margin-top: 10px;">
-  <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
-  <span class="progress-text"></span>
-</div>
-{{else}}
-<p class="notification info">{{localize "lumenn-lightweight.dialog.noAssets"}}</p>
-{{/if}}
+    <div class="lumenn-progress" style="display:none; margin-top: 10px;">
+      <div class="progress-bar"><div
+          class="progress-fill"
+          style="width: 0%"
+        ></div></div>
+      <span class="progress-text"></span>
+    </div>
+  {{else}}
+    <p class="notification info">{{localize
+        "lumenn-lightweight.dialog.noAssets"
+      }}</p>
+  {{/if}}
+</section>

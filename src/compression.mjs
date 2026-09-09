@@ -14,9 +14,23 @@ export function isWebpFile(filename) {
   return getFileExtension(filename) === "webp";
 }
 
+export function decodeFoundryFilename(filename) {
+  if (typeof filename !== "string") return "";
+  const cleanName = filename.split(/[?#]/, 1)[0];
+
+  try {
+    return decodeURIComponent(cleanName).replace(/[\\/]/g, "_");
+  } catch {
+    return cleanName.replace(/[\\/]/g, "_");
+  }
+}
+
 export function getWebpFilename(filename) {
   if (isWebpFile(filename)) return filename;
-  const lastSlash = Math.max(filename.lastIndexOf("/"), filename.lastIndexOf("\\"));
+  const lastSlash = Math.max(
+    filename.lastIndexOf("/"),
+    filename.lastIndexOf("\\"),
+  );
   const directory = lastSlash >= 0 ? filename.slice(0, lastSlash + 1) : "";
   const basename = filename.slice(lastSlash + 1);
   const cleanBasename = basename.split(/[?#]/, 1)[0];
@@ -42,7 +56,8 @@ export async function compressImage(
 
   const originalSize = fileOrBlob.size;
 
-  const isWebp = fileOrBlob.type === "image/webp" || isWebpFile(fileOrBlob.name);
+  const isWebp =
+    fileOrBlob.type === "image/webp" || isWebpFile(fileOrBlob.name);
   // WebP is already in the target format. Re-encoding it is lossy and can
   // replace a valid Foundry reference with a second upload unnecessarily.
   if (isWebp) {

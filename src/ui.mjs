@@ -1,13 +1,19 @@
-import { getQuality, getOverridePercent, getSkipThresholdBytes } from './settings.mjs';
-import { processBatch } from './batch.mjs';
-import { scanUnoptimizedAssets } from './scanner.mjs';
-import { getWebpFilename } from './compression.mjs';
+import {
+  getQuality,
+  getOverridePercent,
+  getSkipThresholdBytes,
+} from "./settings.mjs";
+import { processBatch } from "./batch.mjs";
+import { scanUnoptimizedAssets } from "./scanner.mjs";
+import { decodeFoundryFilename, getWebpFilename } from "./compression.mjs";
 
-const MODULE_ID = 'lumenn-lightweight';
+const MODULE_ID = "lumenn-lightweight";
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
-export class LumennBatchMenuApp extends HandlebarsApplicationMixin(ApplicationV2) {
-  constructor(options={}) {
+export class LumennBatchMenuApp extends HandlebarsApplicationMixin(
+  ApplicationV2,
+) {
+  constructor(options = {}) {
     super(options);
     this.assets = [];
   }
@@ -19,22 +25,22 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(ApplicationV2
     window: {
       title: `${MODULE_ID}.dialog.title`,
       icon: "fas fa-compress-alt",
-      resizable: true
+      resizable: true,
     },
     position: {
       width: 500,
-      height: "auto"
+      height: "auto",
     },
     actions: {
-      optimize: LumennBatchMenuApp.#onOptimize
-    }
+      optimize: LumennBatchMenuApp.#onOptimize,
+    },
   };
 
   static PARTS = {
     content: {
       template: "modules/lumenn-lightweight/templates/batch-menu.hbs",
-      scrollable: [".lumenn-asset-list"]
-    }
+      scrollable: [".lumenn-asset-list"],
+    },
   };
 
   get title() {
@@ -43,15 +49,19 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(ApplicationV2
 
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
-    
-    const collections = { actors: game.actors, items: game.items, scenes: game.scenes };
+
+    const collections = {
+      actors: game.actors,
+      items: game.items,
+      scenes: game.scenes,
+    };
     const threshold = getSkipThresholdBytes();
-    
+
     this.assets = scanUnoptimizedAssets(collections, threshold);
 
     context.assets = this.assets;
     context.currentQuality = getQuality();
-    
+
     return context;
   }
 
@@ -64,22 +74,26 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(ApplicationV2
     const progressFill = progressDiv.querySelector(".progress-fill");
     const progressText = progressDiv.querySelector(".progress-text");
     const icon = target.querySelector("i");
-    
+
     // Extrai checkboxes selecionados nativamente no DOM
-    const checkboxes = Array.from(appElement.querySelectorAll('input[name="assets"]:checked'));
-    const selectedIndices = checkboxes.map(cb => parseInt(cb.value, 10));
+    const checkboxes = Array.from(
+      appElement.querySelectorAll('input[name="assets"]:checked'),
+    );
+    const selectedIndices = checkboxes.map((cb) => parseInt(cb.value, 10));
 
     if (selectedIndices.length === 0) {
       ui.notifications.warn(`${MODULE_ID}: Nenhum asset selecionado.`);
       return;
     }
 
-    const selectedAssets = this.assets.filter((_, i) => selectedIndices.includes(i));
+    const selectedAssets = this.assets.filter((_, i) =>
+      selectedIndices.includes(i),
+    );
 
     // UI state loading
     target.disabled = true;
-    icon.classList.remove('fa-compress-alt');
-    icon.classList.add('fa-spinner', 'fa-spin');
+    icon.classList.remove("fa-compress-alt");
+    icon.classList.add("fa-spinner", "fa-spin");
     progressDiv.style.display = "block";
 
     try {
@@ -89,19 +103,29 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(ApplicationV2
         skipThresholdBytes: getSkipThresholdBytes(),
         fetchImageFn: async (path) => {
           const res = await fetch(path);
-          if (!res.ok) throw new Error(`Falha ao ler ${path}: HTTP ${res.status}`);
+          if (!res.ok)
+            throw new Error(`Falha ao ler ${path}: HTTP ${res.status}`);
           return await res.blob();
         },
         saveImageFn: async (path, compressedBlob) => {
-          const filename = path.split('/').pop();
+          const encodedFilename = path.split("/").pop();
+          const filename = decodeFoundryFilename(encodedFilename);
           const webpName = getWebpFilename(filename);
-          const file = new File([compressedBlob], webpName, { type: 'image/webp' });
-          
-          const pathParts = path.split('/');
+          const file = new File([compressedBlob], webpName, {
+            type: "image/webp",
+          });
+
+          const pathParts = path.split("/");
           pathParts.pop();
-          const targetPath = pathParts.join('/');
-          
-          const uploadRes = await FilePicker.upload("data", targetPath, file, {}, {});
+          const targetPath = pathParts.join("/");
+
+          const uploadRes = await FilePicker.upload(
+            "data",
+            targetPath,
+            file,
+            {},
+            {},
+          );
           const uploadedPath = uploadRes?.path ?? uploadRes;
           if (typeof uploadedPath !== "string" || !uploadedPath) {
             throw new Error("FilePicker.upload não retornou um caminho válido");
@@ -110,15 +134,18 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(ApplicationV2
         },
         updateDocumentFn: async (asset, newPath) => {
           let collection;
-          if (asset.type.includes('Actor')) collection = game.actors;
-          else if (asset.type.includes('Item')) collection = game.items;
-          else if (asset.type.includes('Scene')) collection = game.scenes;
+          if (asset.type.includes("Actor")) collection = game.actors;
+          else if (asset.type.includes("Item")) collection = game.items;
+          else if (asset.type.includes("Scene")) collection = game.scenes;
 
           const doc = collection.get(asset.id);
           if (doc) {
-            if (asset.type === 'Scene Background') await doc.update({ "background.src": newPath });
-            else if (asset.type === 'Scene Foreground') await doc.update({ foreground: newPath });
-            else if (asset.type === 'Actor Token') await doc.update({ "prototypeToken.texture.src": newPath });
+            if (asset.type === "Scene Background")
+              await doc.update({ "background.src": newPath });
+            else if (asset.type === "Scene Foreground")
+              await doc.update({ foreground: newPath });
+            else if (asset.type === "Actor Token")
+              await doc.update({ "prototypeToken.texture.src": newPath });
             else await doc.update({ img: newPath });
           }
         },
@@ -130,19 +157,21 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(ApplicationV2
       });
 
       ui.notifications.info(
-        `${MODULE_ID}: Concluído! ${results.processed} processados, ${results.skipped} pulados.`
+        `${MODULE_ID}: Concluído! ${results.processed} processados, ${results.skipped} pulados.`,
       );
       if (results.failed.length > 0) {
-        ui.notifications.error(`${MODULE_ID}: ${results.failed.length} falharam. Verifique o console.`);
+        ui.notifications.error(
+          `${MODULE_ID}: ${results.failed.length} falharam. Verifique o console.`,
+        );
       }
     } catch (err) {
       console.error(`${MODULE_ID}: Lote falhou`, err);
       ui.notifications.error(`${MODULE_ID}: Falha catastrófica no lote.`);
     } finally {
       target.disabled = false;
-      icon.classList.add('fa-compress-alt');
-      icon.classList.remove('fa-spinner', 'fa-spin');
-      setTimeout(() => progressDiv.style.display = "none", 2000);
+      icon.classList.add("fa-compress-alt");
+      icon.classList.remove("fa-spinner", "fa-spin");
+      setTimeout(() => (progressDiv.style.display = "none"), 2000);
     }
   }
 }
