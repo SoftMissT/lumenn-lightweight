@@ -49,12 +49,48 @@ export function normalizeAssetStem(path) {
   return stem.normalize("NFKC").replace(/\s+/g, " ").trim().toLocaleLowerCase();
 }
 
+export function normalizeAssetPath(path) {
+  if (typeof path !== "string") return "";
+  const [pathname] = splitSuffix(path.replaceAll("\\", "/"));
+  return decodeRepeatedly(pathname)
+    .normalize("NFKC")
+    .replace(/^\/+/, "")
+    .toLocaleLowerCase();
+}
+
 export function findUniqueAssetByStem(files, requestedPath) {
   const requestedStem = normalizeAssetStem(requestedPath);
   const matches = [...new Set(files)].filter(
     (file) => normalizeAssetStem(file) === requestedStem,
   );
   return matches.length === 1 ? matches[0] : null;
+}
+
+export function findBestIndexedAsset(files, requestedPath) {
+  const uniqueFiles = [...new Set(files)];
+  const siblingPaths = getSiblingImagePaths(requestedPath);
+  const exactCandidates = [
+    ...siblingPaths.filter((path) => /\.webp(?:[?#]|$)/i.test(path)),
+    requestedPath,
+    ...siblingPaths.filter((path) => !/\.webp(?:[?#]|$)/i.test(path)),
+  ];
+
+  for (const candidate of exactCandidates) {
+    const normalizedCandidate = normalizeAssetPath(candidate);
+    const matches = uniqueFiles.filter(
+      (file) => normalizeAssetPath(file) === normalizedCandidate,
+    );
+    if (matches.length === 1) return matches[0];
+  }
+
+  const requestedStem = normalizeAssetStem(requestedPath);
+  const webpMatches = uniqueFiles.filter(
+    (file) =>
+      /\.webp(?:[?#]|$)/i.test(file) &&
+      normalizeAssetStem(file) === requestedStem,
+  );
+  if (webpMatches.length === 1) return webpMatches[0];
+  return findUniqueAssetByStem(uniqueFiles, requestedPath);
 }
 
 export function getStorageRoot(path) {
@@ -149,6 +185,44 @@ export function createFoundryImageFetcher({ fetchFn, browseFn }) {
   }
 
   return async function fetchFoundryImage(path) {
+    if (browseFn) {
+      let files = null;
+      try {
+        files = await searchFiles(path);
+      } catch (error) {
+        console.warn(
+          "lumenn-lightweight: FilePicker indisponível; usando recuperação por URL",
+          error,
+        );
+      }
+
+      if (files) {
+        const indexedPath = findBestIndexedAsset(files, path);
+        if (!indexedPath) {
+          throw new Error(
+            `Arquivo não encontrado no índice do FilePicker: ${path}`,
+          );
+        }
+        const indexed = await fetchCandidate(indexedPath, fetchFn);
+        if (!indexed) {
+          throw new Error(
+            `Arquivo listado pelo FilePicker não pôde ser carregado: ${indexedPath}`,
+          );
+        }
+        const existingOptimizedPath =
+          indexed.literalPercent === false &&
+          /\.webp(?:[?#]|$)/i.test(indexed.sourcePath);
+        return {
+          blob: indexed.blob,
+          sourcePath: indexed.sourcePath,
+          repairRequired:
+            indexed.literalPercent ||
+            normalizeAssetPath(indexed.sourcePath) !== normalizeAssetPath(path),
+          existingOptimizedPath,
+        };
+      }
+    }
+
     const webpSiblingPath = getSiblingImagePaths(path).find((candidate) =>
       /\.webp(?:[?#]|$)/i.test(candidate),
     );

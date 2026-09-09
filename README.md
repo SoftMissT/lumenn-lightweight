@@ -24,7 +24,7 @@
 - **Configurações flexíveis** — qualidade, economia mínima, threshold de skip
 - **Não-destrutivo** — arquivos originais nunca são apagados automaticamente
 - **Resiliente** — falha em um asset não aborta o lote inteiro
-- **Recuperação de referências** — procura extensões irmãs e arquivos movidos por nome único antes de declarar um 404
+- **Recuperação de referências** — consulta o inventário real do FilePicker, procura extensões irmãs e arquivos movidos por nome único antes de declarar um arquivo ausente
 - **Reconciliação automática** — ao entrar no mundo, o GM ativo conecta documentos PNG/JPG/JPEG aos WebPs já existentes sem reprocessar os arquivos
 - **i18n** — Inglês e Português (Brasil)
 

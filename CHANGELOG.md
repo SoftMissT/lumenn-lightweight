@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.10] - 2026-09-09
+
+### Fixed
+
+- O lote agora consulta primeiro o inventário real do `FilePicker`, em vez de testar cegamente URLs WebP/PNG/JPG/JPEG.
+- Caminhos URL-encoded são comparados aos caminhos decodificados retornados pelo Foundry, permitindo resolver arquivos como `C13a - Portão.webp` sem falsos 404.
+- Quando o inventário confirma que um arquivo não existe, o lote registra uma única falha e não dispara várias requisições 404.
+- WebP confirmado no inventário continua tendo prioridade e atualiza diretamente a referência do documento sem recompressão.
+
 ## [0.0.9] - 2026-09-09
 
 ### Fixed

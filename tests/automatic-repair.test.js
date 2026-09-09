@@ -93,7 +93,7 @@ describe("automatic WebP reference repair", () => {
     try {
       game.user = { id: "gm-1", isGM: true };
       game.users = { activeGM: game.user };
-      game.modules = new Map([["lumenn-lightweight", { version: "0.0.9" }]]);
+      game.modules = new Map([["lumenn-lightweight", { version: "0.0.10" }]]);
       game.actors = [actor];
       game.actors.get = (id) => (id === actor.id ? actor : undefined);
       game.items = [];
@@ -113,7 +113,7 @@ describe("automatic WebP reference repair", () => {
       expect(game.settings.set).toHaveBeenCalledWith(
         "lumenn-lightweight",
         "lastReferenceRepairVersion",
-        "0.0.9",
+        "0.0.10",
       );
     } finally {
       game.user = previous.user;

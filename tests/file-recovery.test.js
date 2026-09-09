@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   browseFoundryTree,
   createFoundryImageFetcher,
+  findBestIndexedAsset,
   findUniqueAssetByStem,
   getLiteralPercentPath,
   getSiblingImagePaths,
@@ -40,6 +41,18 @@ describe("Foundry image recovery", () => {
       findUniqueAssetByStem(files, "assets/old/IMAGEM%2001%20SOM%20SUMINDO.png"),
     ).toBe(files[0]);
     expect(findUniqueAssetByStem([files[0], `copy/${files[0]}`], files[0])).toBeNull();
+  });
+
+  it("finds encoded references in the FilePicker index and prefers WebP", () => {
+    expect(
+      findBestIndexedAsset(
+        [
+          "assets/Locais/C13a - Portão.png",
+          "assets/Locais/C13a - Portão.webp",
+        ],
+        "assets/Locais/C13a%20-%20Port%C3%A3o.png",
+      ),
+    ).toBe("assets/Locais/C13a - Portão.webp");
   });
 
   it("walks Foundry directories recursively without an unsupported globstar", async () => {
@@ -139,6 +152,30 @@ describe("Foundry image recovery", () => {
 
     expect(browseFn).toHaveBeenCalledTimes(2);
     expect(result).toMatchObject({ sourcePath: relocated, repairRequired: true });
+  });
+
+  it("fetches only the path confirmed by FilePicker", async () => {
+    const png = "assets/confirmed/Hero.png";
+    const blob = new Blob(["png"], { type: "image/png" });
+    const fetchFn = vi.fn().mockResolvedValue(found(blob));
+    const browseFn = vi.fn().mockResolvedValue({ dirs: [], files: [png] });
+    const fetchImage = createFoundryImageFetcher({ fetchFn, browseFn });
+
+    await fetchImage("assets/confirmed/Hero.png");
+
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect(fetchFn).toHaveBeenCalledWith(png);
+  });
+
+  it("fails once without probing extensions absent from the FilePicker index", async () => {
+    const fetchFn = vi.fn();
+    const browseFn = vi.fn().mockResolvedValue({ dirs: [], files: [] });
+    const fetchImage = createFoundryImageFetcher({ fetchFn, browseFn });
+
+    await expect(fetchImage("assets/missing/1.0B.png")).rejects.toThrow(
+      "Arquivo não encontrado no índice do FilePicker",
+    );
+    expect(fetchFn).not.toHaveBeenCalled();
   });
 
   it("reuses the recursive index for multiple missing paths in one batch", async () => {
