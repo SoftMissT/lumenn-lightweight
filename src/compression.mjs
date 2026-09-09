@@ -58,10 +58,9 @@ export async function compressImage(
 
   const isWebp =
     fileOrBlob.type === "image/webp" || isWebpFile(fileOrBlob.name);
-  const skipThresholdBytes = options?.skipThresholdBytes ?? 102400;
-  // Small WebPs are already optimized. Larger WebPs remain eligible under
-  // RF-009, using the same quality/savings gate as PNG and JPEG inputs.
-  if (isWebp && originalSize <= skipThresholdBytes) {
+  // Existing WebPs are already in the target format and must never be
+  // re-encoded. Recompression is lossy and creates duplicate uploads.
+  if (isWebp) {
     return {
       blob: fileOrBlob,
       originalSize,

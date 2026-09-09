@@ -59,7 +59,7 @@ describe("upload-hook", () => {
     );
   });
 
-  it("re-encodes an uploaded WebP above the configured threshold", async () => {
+  it("passes an uploaded WebP through unchanged regardless of size", async () => {
     globalThis.libWrapper = { register: vi.fn() };
     game.modules.get.mockReturnValue({ active: true });
     registerUploadHook();
@@ -73,9 +73,8 @@ describe("upload-hook", () => {
     await wrapper(wrapped, "data", "uploads", file, {}, {});
 
     const uploadedFile = wrapped.mock.calls[0][2];
-    expect(uploadedFile).toBeInstanceOf(File);
-    expect(uploadedFile.name).toBe("large.webp");
-    expect(uploadedFile.size).toBeLessThan(file.size);
+    expect(uploadedFile).toBe(file);
+    expect(ui.notifications.info).not.toHaveBeenCalled();
   });
 
   it("bypasses recompression and notifications for internal batch uploads", async () => {

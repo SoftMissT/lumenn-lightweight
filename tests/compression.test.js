@@ -92,13 +92,13 @@ describe("compressImage", () => {
     expect(result.originalSize).toBe(10);
   });
 
-  it("re-encodes an existing webp above the configured threshold", async () => {
+  it("skips an existing webp even above the legacy threshold", async () => {
     const blob = new Blob([new Uint8Array(10000)], { type: "image/webp" });
     const result = await compressImage(blob, 0.85, {
       skipThresholdBytes: 1000,
     });
-    expect(result.skipped).toBe(false);
-    expect(result.blob.type).toBe("image/webp");
+    expect(result.skipped).toBe(true);
+    expect(result.blob).toBe(blob);
   });
 
   it("compresses other images", async () => {

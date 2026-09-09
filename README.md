@@ -20,7 +20,7 @@
 
 - **Compressão WebP automática** — converte imagens no momento do upload via FilePicker
 - **Modo lote** — otimiza toda a biblioteca de Atores, Itens e Cenas de uma vez
-- **Scanner inteligente** — separa retratos, tokens, itens, fundos e foregrounds, incluindo WebPs para validação por tamanho
+- **Scanner inteligente** — separa retratos, tokens, itens, fundos e foregrounds e ignora referências que já usam WebP
 - **Configurações flexíveis** — qualidade, economia mínima, threshold de skip
 - **Não-destrutivo** — arquivos originais nunca são apagados automaticamente
 - **Resiliente** — falha em um asset não aborta o lote inteiro
@@ -70,7 +70,6 @@ game.modules.get("lumenn-lightweight").api.openOptimizerDialog();
 | Qualidade          | Slider 0.1–1.0 | **0.85** | Qualidade da compressão WebP                       |
 | Economia Mínima %  | Slider 0–90    | **25**   | Porcentagem mínima de redução para substituir      |
 | Auto-otimizar      | Boolean        | **true** | Comprimir ao upload via FilePicker                  |
-| Skip Threshold     | Number (bytes) | **102400** (100KB) | Abaixo deste tamanho, WebP existente é pulado |
 
 ## Arquitetura
 

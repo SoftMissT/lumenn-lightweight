@@ -51,7 +51,7 @@ export function registerSettings(menuType) {
     name: `${MODULE_ID}.settings.skipExisting.name`, // Reaproveitando chave i18n
     hint: `${MODULE_ID}.settings.skipExisting.hint`,
     scope: "world",
-    config: true,
+    config: false,
     type: Number,
     default: 102400, // 100KB
     restricted: true,

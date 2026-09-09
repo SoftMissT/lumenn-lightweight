@@ -1,7 +1,6 @@
 import {
   getQuality,
   getOverridePercent,
-  getSkipThresholdBytes,
 } from "./settings.mjs";
 import { processBatch } from "./batch.mjs";
 import { scanUnoptimizedAssets } from "./scanner.mjs";
@@ -89,9 +88,7 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(
       items: game.items,
       scenes: game.scenes,
     };
-    const threshold = getSkipThresholdBytes();
-
-    this.assets = scanUnoptimizedAssets(collections, threshold);
+    this.assets = scanUnoptimizedAssets(collections);
 
     context.assets = this.assets;
     context.groups = groupAssetsByKind(this.assets, (key) =>
@@ -178,7 +175,6 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(
       const results = await processBatch(selectedAssets, {
         quality: getQuality(),
         overridePercent: getOverridePercent(),
-        skipThresholdBytes: getSkipThresholdBytes(),
         fetchImageFn: fetchFoundryImage,
         saveImageFn: async (path, compressedBlob) => {
           const encodedFilename = path.split("/").pop();

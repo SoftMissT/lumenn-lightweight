@@ -80,4 +80,28 @@ describe("processBatch", () => {
     );
     expect(results).toMatchObject({ processed: 1, repaired: 1, skipped: 0 });
   });
+
+  it("uses an existing WebP sibling without compressing or uploading it", async () => {
+    const asset = { id: "a1", imgPath: "assets/portrait.png", name: "Hero" };
+    const updateDocumentFn = vi.fn().mockResolvedValue();
+    const saveImageFn = vi.fn();
+
+    const results = await processBatch([asset], {
+      fetchImageFn: vi.fn().mockResolvedValue({
+        blob: new Blob(["webp"], { type: "image/webp" }),
+        sourcePath: "assets/portrait.webp",
+        repairRequired: true,
+        existingOptimizedPath: true,
+      }),
+      saveImageFn,
+      updateDocumentFn,
+    });
+
+    expect(saveImageFn).not.toHaveBeenCalled();
+    expect(updateDocumentFn).toHaveBeenCalledWith(
+      asset,
+      "assets/portrait.webp",
+    );
+    expect(results).toMatchObject({ processed: 1, repaired: 1, skipped: 0 });
+  });
 });

@@ -8,7 +8,6 @@ import {
   getUploadHookEnabled,
   getQuality,
   getOverridePercent,
-  getSkipThresholdBytes,
 } from "./settings.mjs";
 import { CustomNotification } from "./notification.mjs";
 
@@ -61,14 +60,14 @@ export function registerUploadHook() {
         return wrapped(source, path, file, body, options);
       }
 
+      if (file.type === "image/webp" || /\.webp$/i.test(file.name)) {
+        return wrapped(source, path, file, body, options);
+      }
+
       try {
         const quality = getQuality();
         const overridePercent = getOverridePercent();
-        const skipThresholdBytes = getSkipThresholdBytes();
-
-        const compressed = await compressImage(file, quality, {
-          skipThresholdBytes,
-        });
+        const compressed = await compressImage(file, quality);
 
         if (
           compressed.skipped ||

@@ -25,16 +25,13 @@ describe("scanner", () => {
 
     const results = scanUnoptimizedAssets({ actors, items, scenes });
 
-    expect(results).toHaveLength(6);
+    expect(results).toHaveLength(4);
     expect(results.map((r) => r.imgPath)).toEqual([
       "assets/goblin.png",
       "assets/goblin_token.png",
-      "assets/already.webp",
       "assets/sword.jpg",
-      "assets/map.webp",
       "assets/clouds.png",
     ]);
-    expect(results.filter((asset) => asset.requiresSizeCheck)).toHaveLength(2);
   });
 
   it("keeps shared paths as separate document update targets", () => {

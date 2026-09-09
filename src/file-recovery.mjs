@@ -127,10 +127,14 @@ export function createFoundryImageFetcher({ fetchFn, browseFn }) {
     for (const siblingPath of getSiblingImagePaths(path)) {
       const sibling = await fetchCandidate(siblingPath, fetchFn);
       if (sibling) {
+        const existingOptimizedPath = /\.webp(?:[?#]|$)/i.test(
+          sibling.sourcePath,
+        );
         return {
           blob: sibling.blob,
           sourcePath: sibling.sourcePath,
           repairRequired: true,
+          existingOptimizedPath,
         };
       }
     }
@@ -140,10 +144,14 @@ export function createFoundryImageFetcher({ fetchFn, browseFn }) {
     if (relocatedPath) {
       const relocated = await fetchCandidate(relocatedPath, fetchFn);
       if (relocated) {
+        const existingOptimizedPath = /\.webp(?:[?#]|$)/i.test(
+          relocated.sourcePath,
+        );
         return {
           blob: relocated.blob,
           sourcePath: relocated.sourcePath,
           repairRequired: true,
+          existingOptimizedPath,
         };
       }
     }

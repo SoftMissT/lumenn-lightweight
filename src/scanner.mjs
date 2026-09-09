@@ -10,6 +10,7 @@ export function scanUnoptimizedAssets(collections, thresholdBytes = 102400) {
       imgPath.startsWith("icons/svg/") ||
       imgPath.toLowerCase().split(/[?#]/, 1)[0].endsWith(".svg") ||
       !isImageFile(imgPath) ||
+      isWebpFile(imgPath) ||
       imgPath.startsWith("data:")
     )
       return;
@@ -22,7 +23,6 @@ export function scanUnoptimizedAssets(collections, thresholdBytes = 102400) {
       name,
       imgPath,
       currentSize: Number.MAX_SAFE_INTEGER,
-      requiresSizeCheck: isWebpFile(imgPath),
     });
   }
 

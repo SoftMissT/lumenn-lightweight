@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.7] - 2026-09-09
+
+### Fixed
+
+- Referências que já terminam em `.webp` são ignoradas completamente pelo scanner.
+- Uploads WebP passam intactos pelo hook, independentemente do tamanho.
+- Quando um PNG/JPG possui WebP irmão, o lote apenas atualiza o documento para o WebP existente, sem recomprimir ou reenviar.
+- O threshold legado de WebP foi ocultado das configurações e removido do fluxo de lote.
+
 ## [0.0.6] - 2026-09-09
 
 ### Fixed

@@ -7,7 +7,6 @@ export async function processBatch(selectedAssets, options = {}) {
   const {
     quality = getQuality(),
     overridePercent = getOverridePercent(),
-    skipThresholdBytes = 102400,
     onProgress,
     updateDocumentFn,
     fetchImageFn,
@@ -35,9 +34,17 @@ export async function processBatch(selectedAssets, options = {}) {
       const repairRequired = fetched?.repairRequired === true;
       const sourcePath = fetched?.sourcePath ?? asset.imgPath;
 
-      const compressed = await compressImage(fileOrBlob, quality, {
-        skipThresholdBytes,
-      });
+      if (fetched?.existingOptimizedPath === true) {
+        await updateDocumentFn(asset, sourcePath);
+        results.processed++;
+        results.repaired++;
+        if (onProgress) {
+          onProgress({ done: i + 1, total, current: asset.name });
+        }
+        continue;
+      }
+
+      const compressed = await compressImage(fileOrBlob, quality);
 
       if (repairRequired) {
         const repairedBlob = compressed.skipped ? fileOrBlob : compressed.blob;

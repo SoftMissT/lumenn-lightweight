@@ -71,6 +71,22 @@ describe("Foundry image recovery", () => {
     expect(result.repairRequired).toBe(true);
   });
 
+  it("marks an existing WebP sibling for reference-only replacement", async () => {
+    const blob = new Blob(["webp"], { type: "image/webp" });
+    const fetchFn = vi.fn(async (path) =>
+      path.endsWith("portrait.webp") ? found(blob) : notFound(),
+    );
+    const fetchImage = createFoundryImageFetcher({ fetchFn });
+
+    const result = await fetchImage("assets/portrait.png");
+
+    expect(result).toMatchObject({
+      sourcePath: "assets/portrait.webp",
+      repairRequired: true,
+      existingOptimizedPath: true,
+    });
+  });
+
   it("recovers a uniquely relocated file through FilePicker wildcard browse", async () => {
     const blob = new Blob(["png"], { type: "image/png" });
     const relocated = "assets/new/IMAGEM 01 SOM SUMINDO.png";
