@@ -37,4 +37,23 @@ describe("document image reference updates", () => {
       ),
     ).rejects.toThrow("Documento Actor não encontrado: missing");
   });
+
+  it("updates a placed token through its parent Scene", async () => {
+    const token = { update: vi.fn().mockResolvedValue(undefined) };
+    const scene = { tokens: new Map([["token-1", token]]) };
+
+    await updateAssetDocumentReference(
+      { id: "token-1", sceneId: "scene-1", type: "Scene Token" },
+      "assets/token.webp",
+      {
+        actors: new Map(),
+        items: new Map(),
+        scenes: new Map([["scene-1", scene]]),
+      },
+    );
+
+    expect(token.update).toHaveBeenCalledWith({
+      "texture.src": "assets/token.webp",
+    });
+  });
 });

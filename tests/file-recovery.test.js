@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  browseFoundryTree,
   createFoundryImageFetcher,
   findUniqueAssetByStem,
   getLiteralPercentPath,
   getSiblingImagePaths,
-  getWildcardSearchPath,
 } from "../src/file-recovery.mjs";
 
 const notFound = () => ({ ok: false, status: 404 });
@@ -34,10 +34,20 @@ describe("Foundry image recovery", () => {
     expect(findUniqueAssetByStem([files[0], `copy/${files[0]}`], files[0])).toBeNull();
   });
 
-  it("builds a v14 FilePicker wildcard search for a relocated basename", () => {
-    expect(
-      getWildcardSearchPath("assets/old/IMAGEM%2001%20SOM%20SUMINDO.png"),
-    ).toBe("assets/**/IMAGEM 01 SOM SUMINDO.*");
+  it("walks Foundry directories recursively without an unsupported globstar", async () => {
+    const browseFn = vi.fn(async (_source, directory) => {
+      if (directory === "assets") {
+        return { dirs: ["assets/new"], files: ["assets/root.png"] };
+      }
+      return { dirs: [], files: ["assets/new/relocated.png"] };
+    });
+
+    await expect(browseFoundryTree("assets", browseFn)).resolves.toEqual([
+      "assets/root.png",
+      "assets/new/relocated.png",
+    ]);
+    expect(browseFn).toHaveBeenNthCalledWith(1, "data", "assets", {});
+    expect(browseFn).toHaveBeenNthCalledWith(2, "data", "assets/new", {});
   });
 
   it("recovers a literal-percent physical filename", async () => {
@@ -87,22 +97,55 @@ describe("Foundry image recovery", () => {
     });
   });
 
-  it("recovers a uniquely relocated file through FilePicker wildcard browse", async () => {
+  it("republishes a literal-percent WebP instead of keeping its broken path", async () => {
+    const blob = new Blob(["webp"], { type: "image/webp" });
+    const fetchFn = vi.fn(async (path) =>
+      path === "assets/portrait%2520one.webp" ? found(blob) : notFound(),
+    );
+    const fetchImage = createFoundryImageFetcher({ fetchFn });
+
+    const result = await fetchImage("assets/portrait%20one.png");
+
+    expect(result).toMatchObject({
+      sourcePath: "assets/portrait%20one.webp",
+      repairRequired: true,
+      existingOptimizedPath: false,
+    });
+  });
+
+  it("recovers a uniquely relocated file through recursive FilePicker browse", async () => {
     const blob = new Blob(["png"], { type: "image/png" });
     const relocated = "assets/new/IMAGEM 01 SOM SUMINDO.png";
     const fetchFn = vi.fn(async (path) =>
       path === relocated ? found(blob) : notFound(),
     );
-    const browseFn = vi.fn().mockResolvedValue({ files: [relocated] });
+    const browseFn = vi.fn(async (_source, directory) =>
+      directory === "assets"
+        ? { dirs: ["assets/new"], files: [] }
+        : { dirs: [], files: [relocated] },
+    );
     const fetchImage = createFoundryImageFetcher({ fetchFn, browseFn });
 
     const result = await fetchImage("assets/old/IMAGEM%2001%20SOM%20SUMINDO.png");
 
-    expect(browseFn).toHaveBeenCalledWith(
-      "data",
-      "assets/**/IMAGEM 01 SOM SUMINDO.*",
-      { wildcard: true },
-    );
+    expect(browseFn).toHaveBeenCalledTimes(2);
     expect(result).toMatchObject({ sourcePath: relocated, repairRequired: true });
+  });
+
+  it("reuses the recursive index for multiple missing paths in one batch", async () => {
+    const first = "assets/new/first.png";
+    const second = "assets/new/second.png";
+    const fetchFn = vi.fn(async (path) =>
+      path === first || path === second
+        ? found(new Blob([path], { type: "image/png" }))
+        : notFound(),
+    );
+    const browseFn = vi.fn().mockResolvedValue({ dirs: [], files: [first, second] });
+    const fetchImage = createFoundryImageFetcher({ fetchFn, browseFn });
+
+    await fetchImage("assets/old/first.jpg");
+    await fetchImage("assets/old/second.jpg");
+
+    expect(browseFn).toHaveBeenCalledTimes(1);
   });
 });

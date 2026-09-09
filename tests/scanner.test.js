@@ -20,18 +20,37 @@ describe("scanner", () => {
         name: "Scene 1",
         background: { src: "assets/map.webp" },
         foreground: "assets/clouds.png",
+        tokens: [
+          {
+            id: "t1",
+            name: "Goblin placed",
+            texture: { src: "assets/placed-token.png" },
+          },
+          {
+            id: "t2",
+            name: "Already WebP",
+            texture: { src: "assets/placed-token.webp" },
+          },
+        ],
       },
     ];
 
     const results = scanUnoptimizedAssets({ actors, items, scenes });
 
-    expect(results).toHaveLength(4);
+    expect(results).toHaveLength(5);
     expect(results.map((r) => r.imgPath)).toEqual([
       "assets/goblin.png",
       "assets/goblin_token.png",
       "assets/sword.jpg",
       "assets/clouds.png",
+      "assets/placed-token.png",
     ]);
+    expect(results.at(-1)).toMatchObject({
+      id: "t1",
+      type: "Scene Token",
+      sceneId: "s1",
+      name: "Scene 1 / Goblin placed",
+    });
   });
 
   it("keeps shared paths as separate document update targets", () => {

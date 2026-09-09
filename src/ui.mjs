@@ -4,27 +4,26 @@ import {
 } from "./settings.mjs";
 import { processBatch } from "./batch.mjs";
 import { scanUnoptimizedAssets } from "./scanner.mjs";
-import { decodeFoundryFilename, getWebpFilename } from "./compression.mjs";
 import { createFoundryImageFetcher } from "./file-recovery.mjs";
-import { withUploadOptimizationBypassed } from "./upload-hook.mjs";
 import { updateAssetDocumentReference } from "./document-reference.mjs";
+import { uploadBatchImage } from "./batch-upload.mjs";
 
 const MODULE_ID = "lumenn-lightweight";
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 const ASSET_GROUPS = [
-  { key: "portraits", type: "Actor", icon: "fa-solid fa-user" },
-  { key: "tokens", type: "Actor Token", icon: "fa-solid fa-chess-pawn" },
-  { key: "items", type: "Item", icon: "fa-solid fa-suitcase" },
-  { key: "sceneBackgrounds", type: "Scene Background", icon: "fa-solid fa-image" },
-  { key: "sceneForegrounds", type: "Scene Foreground", icon: "fa-solid fa-layer-group" },
+  { key: "portraits", types: ["Actor"], icon: "fa-solid fa-user" },
+  { key: "tokens", types: ["Actor Token", "Scene Token"], icon: "fa-solid fa-chess-pawn" },
+  { key: "items", types: ["Item"], icon: "fa-solid fa-suitcase" },
+  { key: "sceneBackgrounds", types: ["Scene Background"], icon: "fa-solid fa-image" },
+  { key: "sceneForegrounds", types: ["Scene Foreground"], icon: "fa-solid fa-layer-group" },
 ];
 
 export function groupAssetsByKind(assets, localize = (key) => key) {
   const indexedAssets = assets.map((asset, index) => ({ ...asset, index }));
   const groups = ASSET_GROUPS.map((definition) => {
     const groupedAssets = indexedAssets.filter(
-      (asset) => asset.type === definition.type,
+      (asset) => definition.types.includes(asset.type),
     );
     return {
       ...definition,
@@ -167,6 +166,7 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(
     icon.classList.add("fa-spinner", "fa-spin");
     progressDiv.hidden = false;
 
+    let shouldRefresh = false;
     try {
       const fetchFoundryImage = createFoundryImageFetcher({
         fetchFn: fetch,
@@ -176,27 +176,10 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(
         quality: getQuality(),
         overridePercent: getOverridePercent(),
         fetchImageFn: fetchFoundryImage,
-        saveImageFn: async (path, compressedBlob) => {
-          const encodedFilename = path.split("/").pop();
-          const filename = decodeFoundryFilename(encodedFilename);
-          const webpName = getWebpFilename(filename);
-          const file = new File([compressedBlob], webpName, {
-            type: "image/webp",
-          });
-
-          const pathParts = path.split("/");
-          pathParts.pop();
-          const targetPath = pathParts.join("/");
-
-          const uploadRes = await withUploadOptimizationBypassed(() =>
-            FilePicker.upload("data", targetPath, file, {}, {}),
-          );
-          const uploadedPath = uploadRes?.path ?? uploadRes;
-          if (typeof uploadedPath !== "string" || !uploadedPath) {
-            throw new Error("FilePicker.upload não retornou um caminho válido");
-          }
-          return uploadedPath;
-        },
+        saveImageFn: (path, compressedBlob) =>
+          uploadBatchImage(path, compressedBlob, (...args) =>
+            FilePicker.upload(...args),
+          ),
         updateDocumentFn: async (asset, newPath) => {
           await updateAssetDocumentReference(asset, newPath, {
             actors: game.actors,
@@ -217,6 +200,7 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(
       } else {
         ui.notifications.info(summary);
       }
+      shouldRefresh = true;
     } catch (err) {
       console.error(`${MODULE_ID}: Lote falhou`, err);
       ui.notifications.error(`${MODULE_ID}: Falha catastrófica no lote.`);
@@ -224,7 +208,13 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(
       target.disabled = false;
       icon.classList.add("fa-compress-alt");
       icon.classList.remove("fa-spinner", "fa-spin");
-      setTimeout(() => (progressDiv.hidden = true), 2000);
+      if (!shouldRefresh) {
+        setTimeout(() => (progressDiv.hidden = true), 2000);
+      }
+    }
+
+    if (shouldRefresh) {
+      await this.render({ force: true });
     }
   }
 }

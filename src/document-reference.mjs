@@ -1,6 +1,7 @@
 const FIELD_BY_TYPE = {
   Actor: "img",
   "Actor Token": "prototypeToken.texture.src",
+  "Scene Token": "texture.src",
   Item: "img",
   "Scene Background": "background.src",
   "Scene Foreground": "foreground",
@@ -15,8 +16,10 @@ function getCollection(asset, collections) {
 
 export async function updateAssetDocumentReference(asset, newPath, collections) {
   const field = FIELD_BY_TYPE[asset.type];
-  const collection = getCollection(asset, collections);
-  const document = collection?.get(asset.id);
+  const document =
+    asset.type === "Scene Token"
+      ? collections.scenes?.get(asset.sceneId)?.tokens?.get(asset.id)
+      : getCollection(asset, collections)?.get(asset.id);
 
   if (!field) throw new Error(`Tipo de asset não suportado: ${asset.type}`);
   if (!document) {

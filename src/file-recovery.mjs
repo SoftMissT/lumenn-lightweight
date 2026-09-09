@@ -57,16 +57,54 @@ export function findUniqueAssetByStem(files, requestedPath) {
   return matches.length === 1 ? matches[0] : null;
 }
 
-export function getWildcardSearchPath(path) {
+function getStorageRoot(path) {
   if (typeof path !== "string") return null;
   const [pathname] = splitSuffix(path.replaceAll("\\", "/"));
-  const cleanPath = pathname.replace(/^\/+/, "");
-  const root = cleanPath.split("/", 1)[0];
-  const filename = decodeRepeatedly(cleanPath.split("/").pop() ?? "");
-  const dot = filename.lastIndexOf(".");
-  const stem = dot > 0 ? filename.slice(0, dot) : filename;
-  if (!root || !stem || /[\\/]/.test(stem)) return null;
-  return `${root}/**/${stem}.*`;
+  return pathname.replace(/^\/+/, "").split("/", 1)[0] || null;
+}
+
+export async function browseFoundryTree(
+  root,
+  browseFn,
+  { maxDirectories = 5000 } = {},
+) {
+  const queue = [root];
+  const visited = new Set();
+  const files = [];
+
+  while (queue.length > 0) {
+    const directory = queue.shift();
+    if (!directory || visited.has(directory)) continue;
+    if (visited.size >= maxDirectories) {
+      throw new Error(
+        `Busca interrompida após ${maxDirectories} diretórios em ${root}`,
+      );
+    }
+
+    visited.add(directory);
+    let result;
+    try {
+      result = await browseFn("data", directory, {});
+    } catch (error) {
+      if (directory === root) throw error;
+      console.warn(
+        `lumenn-lightweight: Diretório ignorado durante busca: ${directory}`,
+        error,
+      );
+      continue;
+    }
+
+    files.push(...(result?.files ?? []));
+    for (const child of result?.dirs ?? []) {
+      if (!visited.has(child)) queue.push(child);
+    }
+
+    if (visited.size % 25 === 0) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+  }
+
+  return files;
 }
 
 async function fetchCandidate(path, fetchFn) {
@@ -94,24 +132,16 @@ async function fetchCandidate(path, fetchFn) {
 }
 
 export function createFoundryImageFetcher({ fetchFn, browseFn }) {
-  const searches = new Map();
+  const storageIndexes = new Map();
 
   async function searchFiles(path) {
     if (!browseFn) return [];
-    const wildcardPath = getWildcardSearchPath(path);
-    if (!wildcardPath) return [];
-    const key = normalizeAssetStem(path);
-    if (!searches.has(key)) {
-      searches.set(
-        key,
-        Promise.resolve(
-          browseFn("data", wildcardPath, { wildcard: true }),
-        ).then(
-          (result) => result?.files ?? [],
-        ),
-      );
+    const root = getStorageRoot(path);
+    if (!root) return [];
+    if (!storageIndexes.has(root)) {
+      storageIndexes.set(root, browseFoundryTree(root, browseFn));
     }
-    return searches.get(key);
+    return storageIndexes.get(root);
   }
 
   return async function fetchFoundryImage(path) {
@@ -127,9 +157,9 @@ export function createFoundryImageFetcher({ fetchFn, browseFn }) {
     for (const siblingPath of getSiblingImagePaths(path)) {
       const sibling = await fetchCandidate(siblingPath, fetchFn);
       if (sibling) {
-        const existingOptimizedPath = /\.webp(?:[?#]|$)/i.test(
-          sibling.sourcePath,
-        );
+        const existingOptimizedPath =
+          sibling.literalPercent === false &&
+          /\.webp(?:[?#]|$)/i.test(sibling.sourcePath);
         return {
           blob: sibling.blob,
           sourcePath: sibling.sourcePath,
@@ -144,9 +174,9 @@ export function createFoundryImageFetcher({ fetchFn, browseFn }) {
     if (relocatedPath) {
       const relocated = await fetchCandidate(relocatedPath, fetchFn);
       if (relocated) {
-        const existingOptimizedPath = /\.webp(?:[?#]|$)/i.test(
-          relocated.sourcePath,
-        );
+        const existingOptimizedPath =
+          relocated.literalPercent === false &&
+          /\.webp(?:[?#]|$)/i.test(relocated.sourcePath);
         return {
           blob: relocated.blob,
           sourcePath: relocated.sourcePath,

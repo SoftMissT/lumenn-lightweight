@@ -20,7 +20,7 @@
 
 - **Compressão WebP automática** — converte imagens no momento do upload via FilePicker
 - **Modo lote** — otimiza toda a biblioteca de Atores, Itens e Cenas de uma vez
-- **Scanner inteligente** — separa retratos, tokens, itens, fundos e foregrounds e ignora referências que já usam WebP
+- **Scanner inteligente** — separa retratos, tokens de protótipo e de cena, itens, fundos e foregrounds e ignora referências que já usam WebP
 - **Configurações flexíveis** — qualidade, economia mínima, threshold de skip
 - **Não-destrutivo** — arquivos originais nunca são apagados automaticamente
 - **Resiliente** — falha em um asset não aborta o lote inteiro
@@ -55,7 +55,7 @@ Ativado por padrão. Ao enviar uma imagem via FilePicker, ela é automaticamente
 4. Selecione os que deseja otimizar e clique em **Otimizar Biblioteca**
 5. Acompanhe o progresso pela barra
 
-Ao concluir cada item, o módulo substitui automaticamente a referência usada pelo documento pelo caminho WebP salvo. O lote produz apenas um resumo final; os uploads internos não disparam as notificações do hook automático.
+Ao concluir cada item, o módulo substitui automaticamente a referência usada pelo documento pelo caminho WebP salvo, inclusive em tokens colocados nas cenas. Ao terminar, a janela é reescaneada para mostrar apenas o que ainda precisa de correção. O lote produz apenas um resumo final; os uploads internos não disparam notificações individuais do FilePicker nem do hook automático.
 
 ### API
 
@@ -79,6 +79,9 @@ src/
 ├── compression.mjs         # Núcleo: compressImage, shouldReplace, isImageFile
 ├── scanner.mjs             # Scanner: scanUnoptimizedAssets (Actors/Items/Scenes)
 ├── batch.mjs               # Processador: processBatch (chunked async)
+├── batch-upload.mjs        # Upload interno silencioso pelo FilePicker
+├── document-reference.mjs  # Atualização dos campos de Actor/Token/Item/Scene
+├── file-recovery.mjs       # Recuperação por extensão e busca recursiva
 ├── upload-hook.mjs         # Hook: libWrapper → FilePicker.upload
 ├── notification.mjs        # Notificação customizada (tamanho antes/depois)
 ├── settings.mjs            # Configurações + registerMenu nativo

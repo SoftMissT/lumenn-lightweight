@@ -6,6 +6,7 @@ describe("asset grouping", () => {
     const assets = [
       { type: "Actor", name: "Portrait" },
       { type: "Actor Token", name: "Token" },
+      { type: "Scene Token", name: "Placed Token" },
       { type: "Item", name: "Item" },
       { type: "Scene Background", name: "Background" },
       { type: "Scene Foreground", name: "Foreground" },
@@ -14,7 +15,7 @@ describe("asset grouping", () => {
     const groups = groupAssetsByKind(assets);
     expect(groups.map((group) => [group.key, group.count])).toEqual([
       ["portraits", 1],
-      ["tokens", 1],
+      ["tokens", 2],
       ["items", 1],
       ["sceneBackgrounds", 1],
       ["sceneForegrounds", 1],

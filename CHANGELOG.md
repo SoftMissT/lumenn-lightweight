@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.8] - 2026-09-09
+
+### Fixed
+
+- Uploads internos do lote passam `notify: false` ao `FilePicker`, eliminando uma notificação azul por arquivo salvo.
+- A janela é reescaneada ao concluir o lote, removendo imediatamente da lista as referências que já foram atualizadas.
+- A recuperação de arquivos movidos agora percorre os diretórios reais do `FilePicker` e reutiliza um índice em cache; o padrão inválido `assets/**` foi removido.
+- Tokens colocados diretamente nas Scenes agora são detectados, exibidos na categoria Tokens e têm `texture.src` atualizado automaticamente.
+- WebPs físicos com `%20` literal são republicados com nome decodificado, em vez de manter uma referência aparentemente WebP porém quebrada.
+
 ## [0.0.7] - 2026-09-09
 
 ### Fixed

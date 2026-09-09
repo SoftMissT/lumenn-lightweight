@@ -4,7 +4,7 @@ export function scanUnoptimizedAssets(collections, thresholdBytes = 102400) {
   const { actors = [], items = [], scenes = [] } = collections;
   const results = [];
 
-  function evaluateAsset(id, type, name, imgPath) {
+  function evaluateAsset(id, type, name, imgPath, metadata = {}) {
     if (!imgPath || typeof imgPath !== "string") return;
     if (
       imgPath.startsWith("icons/svg/") ||
@@ -23,6 +23,7 @@ export function scanUnoptimizedAssets(collections, thresholdBytes = 102400) {
       name,
       imgPath,
       currentSize: Number.MAX_SAFE_INTEGER,
+      ...metadata,
     });
   }
 
@@ -47,6 +48,15 @@ export function scanUnoptimizedAssets(collections, thresholdBytes = 102400) {
       evaluateAsset(doc.id, "Scene Background", doc.name, doc.background.src);
     if (doc.foreground)
       evaluateAsset(doc.id, "Scene Foreground", doc.name, doc.foreground);
+    for (const token of doc.tokens ?? []) {
+      evaluateAsset(
+        token.id,
+        "Scene Token",
+        `${doc.name} / ${token.name}`,
+        token.texture?.src,
+        { sceneId: doc.id },
+      );
+    }
   }
 
   // Keep each document field as an independent target. Two documents can use
