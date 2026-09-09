@@ -1,19 +1,22 @@
 // Global mocks for Foundry VTT in tests
-globalThis.FormApplication = class FormApplication {
-  static get defaultOptions() {
-    return {};
-  }
-};
-
-globalThis.Dialog = class Dialog {
-  constructor() {}
-  render() {}
-};
 
 globalThis.foundry = {
   utils: {
     mergeObject: (a, b) => ({ ...a, ...b }),
   },
+  applications: {
+    api: {
+      ApplicationV2: class ApplicationV2 {
+        constructor(options) { this.options = options; }
+        render() {}
+        async _prepareContext(options) { return {}; }
+      },
+      HandlebarsApplicationMixin: (BaseClass) => class extends BaseClass {},
+      DialogV2: class DialogV2 {
+        static async prompt() {}
+      }
+    }
+  }
 };
 
 globalThis.game = {

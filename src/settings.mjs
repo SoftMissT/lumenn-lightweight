@@ -1,5 +1,4 @@
 const MODULE_ID = "lumenn-lightweight";
-import { LumennBatchMenuApp } from "./ui.mjs";
 
 export function registerSettings() {
   // Alias de backward compatibility ou novas chaves
@@ -46,15 +45,6 @@ export function registerSettings() {
   });
 
   // Alias settings for backward compatibility if needed, or we just map old getter functions to new keys
-
-  // Register batch menu (RF-003, RF-006, RF-011)
-  game.settings.registerMenu(MODULE_ID, "batchMenu", {
-    name: `${MODULE_ID}.settings.button`,
-    label: `${MODULE_ID}.settings.button`,
-    icon: "fas fa-compress-alt",
-    type: LumennBatchMenuApp,
-    restricted: true,
-  });
 }
 
 export function getUploadHookEnabled() {
