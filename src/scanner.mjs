@@ -10,7 +10,6 @@ export function scanUnoptimizedAssets(collections, thresholdBytes = 102400) {
       imgPath.startsWith("icons/svg/") ||
       imgPath.toLowerCase().split(/[?#]/, 1)[0].endsWith(".svg") ||
       !isImageFile(imgPath) ||
-      isWebpFile(imgPath) ||
       imgPath.startsWith("data:")
     )
       return;
@@ -23,6 +22,7 @@ export function scanUnoptimizedAssets(collections, thresholdBytes = 102400) {
       name,
       imgPath,
       currentSize: Number.MAX_SAFE_INTEGER,
+      requiresSizeCheck: isWebpFile(imgPath),
     });
   }
 
@@ -49,11 +49,7 @@ export function scanUnoptimizedAssets(collections, thresholdBytes = 102400) {
       evaluateAsset(doc.id, "Scene Foreground", doc.name, doc.foreground);
   }
 
-  // Remove duplicates based on imgPath
-  const uniquePaths = new Set();
-  return results.filter((asset) => {
-    if (uniquePaths.has(asset.imgPath)) return false;
-    uniquePaths.add(asset.imgPath);
-    return true;
-  });
+  // Keep each document field as an independent target. Two documents can use
+  // the same file while still requiring separate reference updates.
+  return results;
 }

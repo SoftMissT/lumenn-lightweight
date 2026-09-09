@@ -50,4 +50,32 @@ describe("processBatch", () => {
     spyCompress.mockRestore();
     spyReplace.mockRestore();
   });
+
+  it("republishes and updates a broken encoded WebP reference", async () => {
+    const asset = {
+      id: "a1",
+      imgPath: "worlds/test/Hwan%20Enko.webp",
+      name: "Hwan",
+    };
+    const originalWebp = new Blob(["small"], { type: "image/webp" });
+    const saveImageFn = vi.fn().mockResolvedValue("worlds/test/Hwan Enko.webp");
+    const updateDocumentFn = vi.fn().mockResolvedValue();
+
+    const results = await processBatch([asset], {
+      skipThresholdBytes: 1000,
+      fetchImageFn: vi.fn().mockResolvedValue({
+        blob: originalWebp,
+        repairRequired: true,
+      }),
+      saveImageFn,
+      updateDocumentFn,
+    });
+
+    expect(saveImageFn).toHaveBeenCalledWith(asset.imgPath, originalWebp);
+    expect(updateDocumentFn).toHaveBeenCalledWith(
+      asset,
+      "worlds/test/Hwan Enko.webp",
+    );
+    expect(results).toMatchObject({ processed: 1, repaired: 1, skipped: 0 });
+  });
 });

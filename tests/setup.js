@@ -23,10 +23,13 @@ globalThis.game = {
   data: { path: "/foundry/data" },
   settings: {
     _store: {},
+    _menus: {},
     register: (mod, key, data) => {
       globalThis.game.settings._store[`${mod}.${key}`] = data.default;
     },
-    registerMenu: () => {},
+    registerMenu: (mod, key, data) => {
+      globalThis.game.settings._menus[`${mod}.${key}`] = data;
+    },
     get: (mod, key) => globalThis.game.settings._store[`${mod}.${key}`],
   },
   i18n: {

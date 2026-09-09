@@ -58,9 +58,10 @@ export async function compressImage(
 
   const isWebp =
     fileOrBlob.type === "image/webp" || isWebpFile(fileOrBlob.name);
-  // WebP is already in the target format. Re-encoding it is lossy and can
-  // replace a valid Foundry reference with a second upload unnecessarily.
-  if (isWebp) {
+  const skipThresholdBytes = options?.skipThresholdBytes ?? 102400;
+  // Small WebPs are already optimized. Larger WebPs remain eligible under
+  // RF-009, using the same quality/savings gate as PNG and JPEG inputs.
+  if (isWebp && originalSize <= skipThresholdBytes) {
     return {
       blob: fileOrBlob,
       originalSize,

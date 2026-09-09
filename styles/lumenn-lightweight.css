@@ -46,6 +46,152 @@
   transition: background 0.2s;
 }
 
+.lumenn-form .window-content {
+  overflow: hidden;
+}
+
+.lumenn-batch-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: 10px;
+}
+
+.lumenn-batch-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lumenn-batch-summary div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.lumenn-batch-summary span {
+  color: var(--color-text-subtle, #aaa);
+  font-size: 12px;
+}
+
+.lumenn-quality-badge {
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border-light-2, #666);
+  border-radius: 999px;
+}
+
+.lumenn-category-tabs {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.lumenn-category-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 6px 4px;
+  font-size: 11px;
+}
+
+.lumenn-category-tab span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lumenn-category-tab strong {
+  min-width: 20px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 25%);
+}
+
+.lumenn-category-tab.active {
+  border-color: var(--color-warm-2, #f59e0b);
+  box-shadow: 0 0 0 1px var(--color-warm-2, #f59e0b) inset;
+}
+
+.lumenn-asset-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  border: 1px solid var(--color-border-light-2, #555);
+  border-radius: 4px;
+}
+
+.lumenn-group-panel[hidden] {
+  display: none;
+}
+
+.lumenn-group-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 9px;
+  background: var(--color-cool-5-90, rgb(20 20 30 / 95%));
+  border-bottom: 1px solid var(--color-border-light-2, #555);
+  font-weight: 600;
+}
+
+.lumenn-group-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.lumenn-group-actions button {
+  width: auto;
+  min-height: 26px;
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+.lumenn-group-items {
+  display: flex;
+  flex-direction: column;
+}
+
+.lumenn-asset-row {
+  padding: 7px 9px;
+  border-bottom: 1px solid rgb(255 255 255 / 7%);
+}
+
+.lumenn-asset-row:last-child {
+  border-bottom: 0;
+}
+
+.lumenn-asset-row label {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin: 0;
+}
+
+.lumenn-asset-row label span,
+.lumenn-asset-row label small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lumenn-asset-row label small {
+  color: var(--color-text-subtle, #999);
+  font-size: 10px;
+}
+
+.lumenn-batch-footer {
+  flex: 0 0 auto;
+}
+
 .lumenn-batch-btn:hover {
   background: #3a8;
 }
@@ -56,7 +202,11 @@
 }
 
 .lumenn-progress {
-  margin-top: 12px;
+  margin-bottom: 8px;
+}
+
+.lumenn-progress[hidden] {
+  display: none;
 }
 
 .lumenn-progress .progress-bar {
@@ -82,12 +232,8 @@
   text-align: center;
 }
 
-.lumenn-settings-btn {
-  width: 100%;
-  margin-top: 8px;
-  padding: 6px 12px;
-}
-
-.lumenn-optimizer-launcher {
-  margin-top: 16px;
+@media (max-width: 700px) {
+  .lumenn-category-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

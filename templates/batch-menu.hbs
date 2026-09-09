@@ -1,43 +1,93 @@
 <section class="lumenn-batch-content">
-  <p>{{localize
-      "lumenn-lightweight.dialog.scanMessage"
-      count=assets.length
-      quality=currentQuality
-    }}</p>
+  <header class="lumenn-batch-summary">
+    <div>
+      <strong>{{localize "lumenn-lightweight.dialog.scanTitle"}}</strong>
+      <span>{{localize
+          "lumenn-lightweight.dialog.scanMessage"
+          count=assets.length
+        }}</span>
+    </div>
+    <span class="lumenn-quality-badge">WebP {{qualityPercent}}%</span>
+  </header>
 
   {{#if assets.length}}
+    <nav
+      class="lumenn-category-tabs"
+      aria-label="{{localize 'lumenn-lightweight.dialog.categories'}}"
+    >
+      {{#each groups as |group|}}
+        <button
+          type="button"
+          class="lumenn-category-tab {{#if group.active}}active{{/if}}"
+          data-action="filterGroup"
+          data-group="{{group.key}}"
+          aria-selected="{{group.active}}"
+          {{#unless group.count}}disabled{{/unless}}
+        >
+          <i class="{{group.icon}}"></i>
+          <span>{{group.label}}</span>
+          <strong>{{group.count}}</strong>
+        </button>
+      {{/each}}
+    </nav>
+
     <div class="lumenn-asset-list">
-      {{#each assets as |asset index|}}
-        <div class="checkbox">
-          <input
-            type="checkbox"
-            name="assets"
-            id="l_asset_{{index}}"
-            value="{{index}}"
-            checked
-          />
-          <label
-            for="l_asset_{{index}}"
-            title="{{asset.imgPath}}"
-          >{{asset.type}} - {{asset.name}}</label>
-        </div>
+      {{#each groups as |group|}}
+        <section
+          class="lumenn-group-panel"
+          data-group="{{group.key}}"
+          {{#unless group.active}}hidden{{/unless}}
+        >
+          <header class="lumenn-group-header">
+            <span><i class="{{group.icon}}"></i> {{group.label}} · {{group.count}}</span>
+            <span class="lumenn-group-actions">
+              <button
+                type="button"
+                data-action="selectGroup"
+                data-group="{{group.key}}"
+              >{{localize "lumenn-lightweight.dialog.selectAll"}}</button>
+              <button
+                type="button"
+                data-action="clearGroup"
+                data-group="{{group.key}}"
+              >{{localize "lumenn-lightweight.dialog.clearAll"}}</button>
+            </span>
+          </header>
+
+          <div class="lumenn-group-items">
+            {{#each group.assets as |asset|}}
+              <div class="checkbox lumenn-asset-row">
+                <input
+                  type="checkbox"
+                  name="assets"
+                  id="l_asset_{{asset.index}}"
+                  value="{{asset.index}}"
+                  checked
+                />
+                <label for="l_asset_{{asset.index}}" title="{{asset.imgPath}}">
+                  <span>{{asset.name}}</span>
+                  <small>{{asset.imgPath}}</small>
+                </label>
+              </div>
+            {{/each}}
+          </div>
+        </section>
       {{/each}}
     </div>
 
-    <div class="form-group" style="margin-top: 1em;">
+    <footer class="lumenn-batch-footer">
+      <div class="lumenn-progress" hidden>
+        <div class="progress-bar"><div
+            class="progress-fill"
+            style="width: 0%"
+          ></div></div>
+        <span class="progress-text"></span>
+      </div>
       <button type="button" class="lumenn-batch-btn" data-action="optimize">
         <i class="fas fa-compress-alt"></i>
         {{localize "lumenn-lightweight.dialog.batchOptimize"}}
       </button>
-    </div>
-
-    <div class="lumenn-progress" style="display:none; margin-top: 10px;">
-      <div class="progress-bar"><div
-          class="progress-fill"
-          style="width: 0%"
-        ></div></div>
-      <span class="progress-text"></span>
-    </div>
+    </footer>
   {{else}}
     <p class="notification info">{{localize
         "lumenn-lightweight.dialog.noAssets"

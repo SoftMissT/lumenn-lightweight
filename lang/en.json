@@ -17,10 +17,28 @@
         "name": "Skip Existing WebP",
         "hint": "Skip files that already have a .webp version in the same directory."
       },
+      "batchMenu": {
+        "name": "Image Optimizer",
+        "label": "Open Optimizer",
+        "hint": "Review and optimize portraits, tokens, items, and scene images in batches."
+      },
       "button": "Image Optimizer"
     },
     "dialog": {
       "title": "Lumenn Lightweight Image Optimizer",
+      "scanTitle": "Assets available for optimization",
+      "scanMessage": "{count} image references found in this world.",
+      "categories": "Asset categories",
+      "selectAll": "Select all",
+      "clearAll": "Clear",
+      "noAssets": "No image references were found in this world.",
+      "groups": {
+        "portraits": "Portraits",
+        "tokens": "Tokens",
+        "items": "Items",
+        "sceneBackgrounds": "Scene Backgrounds",
+        "sceneForegrounds": "Foregrounds"
+      },
       "quality": "Compression Quality",
       "overridePercent": "Minimum Savings %",
       "autoOptimize": "Auto-optimize uploads",

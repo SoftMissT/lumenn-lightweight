@@ -10,6 +10,61 @@ import { decodeFoundryFilename, getWebpFilename } from "./compression.mjs";
 const MODULE_ID = "lumenn-lightweight";
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
+const ASSET_GROUPS = [
+  { key: "portraits", type: "Actor", icon: "fa-solid fa-user" },
+  { key: "tokens", type: "Actor Token", icon: "fa-solid fa-chess-pawn" },
+  { key: "items", type: "Item", icon: "fa-solid fa-suitcase" },
+  { key: "sceneBackgrounds", type: "Scene Background", icon: "fa-solid fa-image" },
+  { key: "sceneForegrounds", type: "Scene Foreground", icon: "fa-solid fa-layer-group" },
+];
+
+export function getLiteralPercentPath(path) {
+  if (typeof path !== "string" || !/%[0-9a-f]{2}/i.test(path)) return null;
+  const hashIndex = path.indexOf("#");
+  const queryIndex = path.indexOf("?");
+  const suffixIndex = [hashIndex, queryIndex]
+    .filter((index) => index >= 0)
+    .sort((a, b) => a - b)[0] ?? path.length;
+  return `${path.slice(0, suffixIndex).replaceAll("%", "%25")}${path.slice(suffixIndex)}`;
+}
+
+export async function fetchFoundryImage(path, fetchFn = fetch) {
+  const response = await fetchFn(path);
+  if (response.ok) {
+    return { blob: await response.blob(), repairRequired: false };
+  }
+
+  const recoveryPath = getLiteralPercentPath(path);
+  if (response.status === 404 && recoveryPath) {
+    const recoveryResponse = await fetchFn(recoveryPath);
+    if (recoveryResponse.ok) {
+      return { blob: await recoveryResponse.blob(), repairRequired: true };
+    }
+  }
+
+  throw new Error(`Falha ao ler ${path}: HTTP ${response.status}`);
+}
+
+export function groupAssetsByKind(assets, localize = (key) => key) {
+  const indexedAssets = assets.map((asset, index) => ({ ...asset, index }));
+  const groups = ASSET_GROUPS.map((definition) => {
+    const groupedAssets = indexedAssets.filter(
+      (asset) => asset.type === definition.type,
+    );
+    return {
+      ...definition,
+      label: localize(`${MODULE_ID}.dialog.groups.${definition.key}`),
+      count: groupedAssets.length,
+      assets: groupedAssets,
+      active: false,
+    };
+  });
+
+  const firstAvailable = groups.find((group) => group.count > 0);
+  if (firstAvailable) firstAvailable.active = true;
+  return groups;
+}
+
 export class LumennBatchMenuApp extends HandlebarsApplicationMixin(
   ApplicationV2,
 ) {
@@ -28,11 +83,14 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(
       resizable: true,
     },
     position: {
-      width: 500,
-      height: "auto",
+      width: 680,
+      height: 620,
     },
     actions: {
       optimize: LumennBatchMenuApp.#onOptimize,
+      filterGroup: LumennBatchMenuApp.#onFilterGroup,
+      selectGroup: LumennBatchMenuApp.#onSelectGroup,
+      clearGroup: LumennBatchMenuApp.#onClearGroup,
     },
   };
 
@@ -60,9 +118,49 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(
     this.assets = scanUnoptimizedAssets(collections, threshold);
 
     context.assets = this.assets;
+    context.groups = groupAssetsByKind(this.assets, (key) =>
+      game.i18n.localize(key),
+    );
     context.currentQuality = getQuality();
+    context.qualityPercent = Math.round(getQuality() * 100);
 
     return context;
+  }
+
+  static #onFilterGroup(_event, target) {
+    const appElement = target.closest(".lumenn-form");
+    const group = target.dataset.group;
+
+    for (const tab of appElement.querySelectorAll(".lumenn-category-tab")) {
+      const active = tab.dataset.group === group;
+      tab.classList.toggle("active", active);
+      tab.setAttribute("aria-selected", String(active));
+    }
+
+    for (const panel of appElement.querySelectorAll(".lumenn-group-panel")) {
+      panel.hidden = panel.dataset.group !== group;
+    }
+  }
+
+  static #setGroupSelection(target, checked) {
+    const appElement = target.closest(".lumenn-form");
+    const group = target.dataset.group;
+    const panel = appElement.querySelector(
+      `.lumenn-group-panel[data-group="${group}"]`,
+    );
+    if (!panel) return;
+
+    for (const checkbox of panel.querySelectorAll('input[name="assets"]')) {
+      checkbox.checked = checked;
+    }
+  }
+
+  static #onSelectGroup(_event, target) {
+    LumennBatchMenuApp.#setGroupSelection(target, true);
+  }
+
+  static #onClearGroup(_event, target) {
+    LumennBatchMenuApp.#setGroupSelection(target, false);
   }
 
   static async #onOptimize(event, target) {
@@ -94,19 +192,14 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(
     target.disabled = true;
     icon.classList.remove("fa-compress-alt");
     icon.classList.add("fa-spinner", "fa-spin");
-    progressDiv.style.display = "block";
+    progressDiv.hidden = false;
 
     try {
       const results = await processBatch(selectedAssets, {
         quality: getQuality(),
         overridePercent: getOverridePercent(),
         skipThresholdBytes: getSkipThresholdBytes(),
-        fetchImageFn: async (path) => {
-          const res = await fetch(path);
-          if (!res.ok)
-            throw new Error(`Falha ao ler ${path}: HTTP ${res.status}`);
-          return await res.blob();
-        },
+        fetchImageFn: fetchFoundryImage,
         saveImageFn: async (path, compressedBlob) => {
           const encodedFilename = path.split("/").pop();
           const filename = decodeFoundryFilename(encodedFilename);
@@ -157,7 +250,7 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(
       });
 
       ui.notifications.info(
-        `${MODULE_ID}: Concluído! ${results.processed} processados, ${results.skipped} pulados.`,
+        `${MODULE_ID}: Concluído! ${results.processed} processados (${results.repaired} referências reparadas), ${results.skipped} pulados.`,
       );
       if (results.failed.length > 0) {
         ui.notifications.error(
@@ -171,7 +264,7 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(
       target.disabled = false;
       icon.classList.add("fa-compress-alt");
       icon.classList.remove("fa-spinner", "fa-spin");
-      setTimeout(() => (progressDiv.style.display = "none"), 2000);
+      setTimeout(() => (progressDiv.hidden = true), 2000);
     }
   }
 }

@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.5] - 2026-09-09
+
+### Fixed
+
+- Removido o botão injetado no rodapé global das Configurações; o otimizador agora usa o submenu nativo de `game.settings.registerMenu` exigido pelo SDD.
+- Janela limitada a 680×620 com scroll interno e rodapé de ação persistente.
+- Assets separados em Retratos, Tokens, Itens, Fundos de Cena e Foregrounds.
+- Cada categoria possui contador, seleção total e limpeza independente.
+- Textos ausentes de i18n foram adicionados em pt-BR e inglês.
+- WebPs voltaram a ser detectados: pequenos são preservados e os maiores passam pelo limiar configurado.
+- Referências quebradas por nomes gravados com `%20` literal são recuperadas, republicadas com nome real e atualizadas pelo próprio módulo.
+- Manifesto e pacote passam a ser validados juntos antes da publicação da release.
+
 ## [0.0.4] - 2026-09-09
 
 ### Fixed

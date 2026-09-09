@@ -25,22 +25,25 @@ describe("scanner", () => {
 
     const results = scanUnoptimizedAssets({ actors, items, scenes });
 
-    expect(results).toHaveLength(4);
+    expect(results).toHaveLength(6);
     expect(results.map((r) => r.imgPath)).toEqual([
       "assets/goblin.png",
       "assets/goblin_token.png",
+      "assets/already.webp",
       "assets/sword.jpg",
+      "assets/map.webp",
       "assets/clouds.png",
     ]);
+    expect(results.filter((asset) => asset.requiresSizeCheck)).toHaveLength(2);
   });
 
-  it("filters duplicates", () => {
+  it("keeps shared paths as separate document update targets", () => {
     const actors = [
       { id: "a1", name: "Actor 1", img: "assets/goblin.png" },
       { id: "a2", name: "Actor 2", img: "assets/goblin.png" },
     ];
     const results = scanUnoptimizedAssets({ actors });
-    expect(results).toHaveLength(1);
-    expect(results[0].imgPath).toBe("assets/goblin.png");
+    expect(results).toHaveLength(2);
+    expect(results.map((asset) => asset.id)).toEqual(["a1", "a2"]);
   });
 });

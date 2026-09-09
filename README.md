@@ -20,7 +20,7 @@
 
 - **Compressão WebP automática** — converte imagens no momento do upload via FilePicker
 - **Modo lote** — otimiza toda a biblioteca de Atores, Itens e Cenas de uma vez
-- **Scanner inteligente** — identifica automaticamente assets não-otimizados no mundo
+- **Scanner inteligente** — separa retratos, tokens, itens, fundos e foregrounds, incluindo WebPs para validação por tamanho
 - **Configurações flexíveis** — qualidade, economia mínima, threshold de skip
 - **Não-destrutivo** — arquivos originais nunca são apagados automaticamente
 - **Resiliente** — falha em um asset não aborta o lote inteiro
@@ -49,8 +49,8 @@ Ativado por padrão. Ao enviar uma imagem via FilePicker, ela é automaticamente
 ### Modo Lote
 
 1. Abra as **Configurações do Módulo** (Module Settings)
-2. Clique em **Otimizador de Imagens**
-3. O scanner lista todos os assets não-otimizados (Atores, Itens, Cenas)
+2. No submenu nativo **Otimizador de Imagens**, clique em **Abrir Otimizador**
+3. O scanner organiza as referências em Retratos, Tokens, Itens, Fundos de Cena e Foregrounds
 4. Selecione os que deseja otimizar e clique em **Otimizar Biblioteca**
 5. Acompanhe o progresso pela barra
 
@@ -73,13 +73,13 @@ game.modules.get("lumenn-lightweight").api.openOptimizerDialog();
 
 ```
 src/
-├── lumenn-lightweight.js   # Entrypoint: hooks init/ready/renderSidebarTab
+├── lumenn-lightweight.js   # Entrypoint: hooks init/ready
 ├── compression.mjs         # Núcleo: compressImage, shouldReplace, isImageFile
 ├── scanner.mjs             # Scanner: scanUnoptimizedAssets (Actors/Items/Scenes)
 ├── batch.mjs               # Processador: processBatch (chunked async)
 ├── upload-hook.mjs         # Hook: libWrapper → FilePicker.upload
 ├── notification.mjs        # Notificação customizada (tamanho antes/depois)
-├── settings.mjs            # Registro de configurações + submenu
+├── settings.mjs            # Configurações + registerMenu nativo
 ├── paths.mjs               # Utilitários de caminho Foundry
 └── ui.mjs                  # Dialog de lote com checkboxes e progresso
 ```

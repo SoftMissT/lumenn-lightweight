@@ -47,12 +47,6 @@ export function registerUploadHook() {
         return wrapped(source, path, file, body, options);
       }
 
-      // Existing WebP files are already optimized and must keep their original
-      // reference. Re-encoding them can create broken/duplicate uploads.
-      if (file.type === "image/webp" || getWebpFilename(file.name) === file.name) {
-        return wrapped(source, path, file, body, options);
-      }
-
       try {
         const quality = getQuality();
         const overridePercent = getOverridePercent();

@@ -7,6 +7,17 @@ describe("upload-hook", () => {
       modules: { get: vi.fn() },
       user: { isGM: true },
       i18n: { localize: vi.fn() },
+      settings: {
+        get: vi.fn((_module, key) => {
+          const values = {
+            uploadHookEnabled: true,
+            compressionQuality: 0.85,
+            overridePercent: 0,
+            skipThresholdBytes: 1000,
+          };
+          return values[key];
+        }),
+      },
     };
     globalThis.ui = { notifications: { warn: vi.fn(), info: vi.fn() } };
     globalThis.libWrapper = undefined;
@@ -43,5 +54,24 @@ describe("upload-hook", () => {
       expect.any(Function),
       "WRAPPER",
     );
+  });
+
+  it("re-encodes an uploaded WebP above the configured threshold", async () => {
+    globalThis.libWrapper = { register: vi.fn() };
+    game.modules.get.mockReturnValue({ active: true });
+    registerUploadHook();
+
+    const wrapper = libWrapper.register.mock.calls[0][2];
+    const wrapped = vi.fn().mockResolvedValue({ path: "uploads/large.webp" });
+    const file = new File([new Uint8Array(10000)], "large.webp", {
+      type: "image/webp",
+    });
+
+    await wrapper(wrapped, "data", "uploads", file, {}, {});
+
+    const uploadedFile = wrapped.mock.calls[0][2];
+    expect(uploadedFile).toBeInstanceOf(File);
+    expect(uploadedFile.name).toBe("large.webp");
+    expect(uploadedFile.size).toBeLessThan(file.size);
   });
 });

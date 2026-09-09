@@ -17,10 +17,28 @@
         "name": "Pular WebP Existente",
         "hint": "Pular arquivos que já possuem versão .webp no mesmo diretório."
       },
+      "batchMenu": {
+        "name": "Otimizador de Imagens",
+        "label": "Abrir Otimizador",
+        "hint": "Ver e otimizar retratos, tokens, itens e imagens de cena em lote."
+      },
       "button": "Otimizador de Imagens"
     },
     "dialog": {
       "title": "Lumenn Lightweight Otimizador de Imagens",
+      "scanTitle": "Assets disponíveis para otimização",
+      "scanMessage": "{count} referências de imagem encontradas no mundo.",
+      "categories": "Categorias de assets",
+      "selectAll": "Selecionar tudo",
+      "clearAll": "Limpar",
+      "noAssets": "Nenhuma referência de imagem foi encontrada no mundo.",
+      "groups": {
+        "portraits": "Retratos",
+        "tokens": "Tokens",
+        "items": "Itens",
+        "sceneBackgrounds": "Fundos de Cena",
+        "sceneForegrounds": "Foregrounds"
+      },
       "quality": "Qualidade da Compressão",
       "overridePercent": "Economia Mínima %",
       "autoOptimize": "Otimizar uploads automaticamente",

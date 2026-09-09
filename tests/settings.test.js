@@ -8,12 +8,15 @@ import {
 } from "../src/settings.mjs";
 
 describe("settings", () => {
+  class BatchMenu {}
+
   beforeEach(() => {
     game.settings._store = {};
+    game.settings._menus = {};
   });
 
   it("registers all settings", () => {
-    registerSettings();
+    registerSettings(BatchMenu);
     expect(game.settings._store["lumenn-lightweight.compressionQuality"]).toBe(
       0.85,
     );
@@ -24,25 +27,30 @@ describe("settings", () => {
     expect(game.settings._store["lumenn-lightweight.skipThresholdBytes"]).toBe(
       102400,
     );
+    expect(game.settings._menus["lumenn-lightweight.batchMenu"]).toMatchObject({
+      type: BatchMenu,
+      restricted: true,
+      icon: "fas fa-compress-alt",
+    });
   });
 
   it("getQuality returns default", () => {
-    registerSettings();
+    registerSettings(BatchMenu);
     expect(getQuality()).toBe(0.85);
   });
 
   it("getOverridePercent returns default", () => {
-    registerSettings();
+    registerSettings(BatchMenu);
     expect(getOverridePercent()).toBe(25);
   });
 
   it("getAutoOptimize returns default", () => {
-    registerSettings();
+    registerSettings(BatchMenu);
     expect(getAutoOptimize()).toBe(true);
   });
 
   it("getSkipExisting returns default based on threshold", () => {
-    registerSettings();
+    registerSettings(BatchMenu);
     expect(getSkipExisting()).toBe(true);
   });
 });

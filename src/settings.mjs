@@ -1,6 +1,19 @@
 const MODULE_ID = "lumenn-lightweight";
 
-export function registerSettings() {
+export function registerSettings(menuType) {
+  if (!menuType) {
+    throw new TypeError("registerSettings requires a batch menu Application class");
+  }
+
+  game.settings.registerMenu(MODULE_ID, "batchMenu", {
+    name: `${MODULE_ID}.settings.batchMenu.name`,
+    label: `${MODULE_ID}.settings.batchMenu.label`,
+    hint: `${MODULE_ID}.settings.batchMenu.hint`,
+    icon: "fas fa-compress-alt",
+    type: menuType,
+    restricted: true,
+  });
+
   // Alias de backward compatibility ou novas chaves
   game.settings.register(MODULE_ID, "uploadHookEnabled", {
     name: `${MODULE_ID}.settings.autoOptimize.name`,
