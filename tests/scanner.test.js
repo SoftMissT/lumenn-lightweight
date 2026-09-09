@@ -50,7 +50,15 @@ describe("scanner", () => {
       type: "Scene Token",
       sceneId: "s1",
       name: "Scene 1 / Goblin placed",
+      format: "PNG",
     });
+    expect(results.map((asset) => asset.format)).toEqual([
+      "PNG",
+      "PNG",
+      "JPG",
+      "PNG",
+      "PNG",
+    ]);
   });
 
   it("keeps shared paths as separate document update targets", () => {

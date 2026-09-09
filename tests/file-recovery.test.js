@@ -5,6 +5,7 @@ import {
   findUniqueAssetByStem,
   getLiteralPercentPath,
   getSiblingImagePaths,
+  getStorageRoot,
 } from "../src/file-recovery.mjs";
 
 const notFound = () => ({ ok: false, status: 404 });
@@ -21,6 +22,13 @@ describe("Foundry image recovery", () => {
     expect(getSiblingImagePaths("assets/C13a%20-%20Port%C3%A3o.webp")).toContain(
       "assets/C13a%20-%20Port%C3%A3o.png",
     );
+  });
+
+  it("limits recursive world searches to the current package", () => {
+    expect(getStorageRoot("worlds/one-shot/assets/portrait.png")).toBe(
+      "worlds/one-shot",
+    );
+    expect(getStorageRoot("assets/portrait.png")).toBe("assets");
   });
 
   it("matches relocated files by decoded basename only when unique", () => {
@@ -95,6 +103,7 @@ describe("Foundry image recovery", () => {
       repairRequired: true,
       existingOptimizedPath: true,
     });
+    expect(fetchFn).not.toHaveBeenCalledWith("assets/portrait.png");
   });
 
   it("republishes a literal-percent WebP instead of keeping its broken path", async () => {

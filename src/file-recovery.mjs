@@ -57,10 +57,14 @@ export function findUniqueAssetByStem(files, requestedPath) {
   return matches.length === 1 ? matches[0] : null;
 }
 
-function getStorageRoot(path) {
+export function getStorageRoot(path) {
   if (typeof path !== "string") return null;
   const [pathname] = splitSuffix(path.replaceAll("\\", "/"));
-  return pathname.replace(/^\/+/, "").split("/", 1)[0] || null;
+  const parts = pathname.replace(/^\/+/, "").split("/").filter(Boolean);
+  if (["worlds", "modules", "systems"].includes(parts[0]) && parts[1]) {
+    return `${parts[0]}/${parts[1]}`;
+  }
+  return parts[0] || null;
 }
 
 export async function browseFoundryTree(
@@ -145,6 +149,21 @@ export function createFoundryImageFetcher({ fetchFn, browseFn }) {
   }
 
   return async function fetchFoundryImage(path) {
+    const webpSiblingPath = getSiblingImagePaths(path).find((candidate) =>
+      /\.webp(?:[?#]|$)/i.test(candidate),
+    );
+    if (webpSiblingPath) {
+      const webpSibling = await fetchCandidate(webpSiblingPath, fetchFn);
+      if (webpSibling) {
+        return {
+          blob: webpSibling.blob,
+          sourcePath: webpSibling.sourcePath,
+          repairRequired: true,
+          existingOptimizedPath: webpSibling.literalPercent === false,
+        };
+      }
+    }
+
     const direct = await fetchCandidate(path, fetchFn);
     if (direct) {
       return {
@@ -155,6 +174,7 @@ export function createFoundryImageFetcher({ fetchFn, browseFn }) {
     }
 
     for (const siblingPath of getSiblingImagePaths(path)) {
+      if (siblingPath === webpSiblingPath) continue;
       const sibling = await fetchCandidate(siblingPath, fetchFn);
       if (sibling) {
         const existingOptimizedPath =

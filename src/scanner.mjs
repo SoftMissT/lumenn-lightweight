@@ -1,4 +1,15 @@
-import { isImageFile, isWebpFile } from "./compression.mjs";
+import {
+  getFileExtension,
+  isImageFile,
+  isWebpFile,
+} from "./compression.mjs";
+
+export function identifyImageFormat(imgPath) {
+  const extension = getFileExtension(imgPath);
+  return ["png", "jpg", "jpeg", "webp"].includes(extension)
+    ? extension.toUpperCase()
+    : "UNKNOWN";
+}
 
 export function scanUnoptimizedAssets(collections, thresholdBytes = 102400) {
   const { actors = [], items = [], scenes = [] } = collections;
@@ -22,6 +33,7 @@ export function scanUnoptimizedAssets(collections, thresholdBytes = 102400) {
       type,
       name,
       imgPath,
+      format: identifyImageFormat(imgPath),
       currentSize: Number.MAX_SAFE_INTEGER,
       ...metadata,
     });

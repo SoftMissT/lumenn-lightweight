@@ -7,6 +7,7 @@ import { scanUnoptimizedAssets } from "./scanner.mjs";
 import { createFoundryImageFetcher } from "./file-recovery.mjs";
 import { updateAssetDocumentReference } from "./document-reference.mjs";
 import { uploadBatchImage } from "./batch-upload.mjs";
+import { reconcileWorldWebpReferences } from "./automatic-repair.mjs";
 
 const MODULE_ID = "lumenn-lightweight";
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -18,6 +19,15 @@ const ASSET_GROUPS = [
   { key: "sceneBackgrounds", types: ["Scene Background"], icon: "fa-solid fa-image" },
   { key: "sceneForegrounds", types: ["Scene Foreground"], icon: "fa-solid fa-layer-group" },
 ];
+
+const OPTIMIZABLE_FORMATS = ["PNG", "JPG", "JPEG"];
+
+export function summarizeAssetFormats(assets) {
+  return OPTIMIZABLE_FORMATS.map((format) => ({
+    format,
+    count: assets.filter((asset) => asset.format === format).length,
+  })).filter((entry) => entry.count > 0);
+}
 
 export function groupAssetsByKind(assets, localize = (key) => key) {
   const indexedAssets = assets.map((asset, index) => ({ ...asset, index }));
@@ -90,6 +100,7 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(
     this.assets = scanUnoptimizedAssets(collections);
 
     context.assets = this.assets;
+    context.formats = summarizeAssetFormats(this.assets);
     context.groups = groupAssetsByKind(this.assets, (key) =>
       game.i18n.localize(key),
     );
@@ -194,8 +205,12 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(
         },
       });
 
-      const summary = `${MODULE_ID}: Concluído! ${results.processed} processados (${results.repaired} referências reparadas), ${results.skipped} pulados, ${results.failed.length} falharam.`;
-      if (results.failed.length > 0) {
+      const reconciliation = await reconcileWorldWebpReferences();
+
+      const failedCount = results.failed.length + reconciliation.failed.length;
+      const repairedCount = results.repaired + reconciliation.repaired;
+      const summary = `${MODULE_ID}: Concluído! ${results.processed} processados (${repairedCount} referências reparadas), ${results.skipped} pulados, ${failedCount} falharam.`;
+      if (failedCount > 0) {
         ui.notifications.error(`${summary} Verifique o console.`);
       } else {
         ui.notifications.info(summary);

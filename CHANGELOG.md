@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.9] - 2026-09-09
+
+### Fixed
+
+- Ao carregar o mundo, o GM ativo reconcilia automaticamente referências PNG/JPG/JPEG com WebPs já existentes, uma vez por versão do módulo.
+- WebP irmão no mesmo diretório tem prioridade; WebP movido só é usado quando o basename é único, evitando substituições ambíguas.
+- Tokens embutidos em Scenes agora são atualizados pela API v14 oficial `Scene.updateEmbeddedDocuments`.
+- Cada asset agora exibe seu formato real como badge visível: `PNG`, `JPG` ou `JPEG`.
+- O cabeçalho apresenta contadores separados por formato, sem confundir o tipo de arquivo com a categoria de uso.
+- A interface informa explicitamente que referências `WEBP` já otimizadas foram ignoradas pelo scanner.
+- Adicionada cobertura de regressão para identificação e contagem independente das extensões suportadas.
+
 ## [0.0.8] - 2026-09-09
 
 ### Fixed

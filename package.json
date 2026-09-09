@@ -1,6 +1,6 @@
 {
   "name": "lumenn-lightweight",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Módulo Foundry VTT para otimizar imagens (WebP) com modo lote e hook de upload",
   "type": "module",
   "scripts": {

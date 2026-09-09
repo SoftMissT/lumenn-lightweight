@@ -16,12 +16,22 @@ function getCollection(asset, collections) {
 
 export async function updateAssetDocumentReference(asset, newPath, collections) {
   const field = FIELD_BY_TYPE[asset.type];
-  const document =
-    asset.type === "Scene Token"
-      ? collections.scenes?.get(asset.sceneId)?.tokens?.get(asset.id)
-      : getCollection(asset, collections)?.get(asset.id);
 
   if (!field) throw new Error(`Tipo de asset não suportado: ${asset.type}`);
+
+  if (asset.type === "Scene Token") {
+    const scene = collections.scenes?.get(asset.sceneId);
+    const token = scene?.tokens?.get(asset.id);
+    if (!scene || !token) {
+      throw new Error(`Documento Scene Token não encontrado: ${asset.id}`);
+    }
+    await scene.updateEmbeddedDocuments("Token", [
+      { _id: asset.id, [field]: newPath },
+    ]);
+    return { document: token, field, newPath };
+  }
+
+  const document = getCollection(asset, collections)?.get(asset.id);
   if (!document) {
     throw new Error(`Documento ${asset.type} não encontrado: ${asset.id}`);
   }

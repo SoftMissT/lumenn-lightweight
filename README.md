@@ -20,11 +20,12 @@
 
 - **Compressão WebP automática** — converte imagens no momento do upload via FilePicker
 - **Modo lote** — otimiza toda a biblioteca de Atores, Itens e Cenas de uma vez
-- **Scanner inteligente** — separa retratos, tokens de protótipo e de cena, itens, fundos e foregrounds e ignora referências que já usam WebP
+- **Scanner inteligente** — separa retratos, tokens de protótipo e de cena, itens, fundos e foregrounds; exibe badges e totais distintos para PNG, JPG e JPEG; ignora referências que já usam WebP
 - **Configurações flexíveis** — qualidade, economia mínima, threshold de skip
 - **Não-destrutivo** — arquivos originais nunca são apagados automaticamente
 - **Resiliente** — falha em um asset não aborta o lote inteiro
 - **Recuperação de referências** — procura extensões irmãs e arquivos movidos por nome único antes de declarar um 404
+- **Reconciliação automática** — ao entrar no mundo, o GM ativo conecta documentos PNG/JPG/JPEG aos WebPs já existentes sem reprocessar os arquivos
 - **i18n** — Inglês e Português (Brasil)
 
 ## Compatibilidade
@@ -80,6 +81,7 @@ src/
 ├── scanner.mjs             # Scanner: scanUnoptimizedAssets (Actors/Items/Scenes)
 ├── batch.mjs               # Processador: processBatch (chunked async)
 ├── batch-upload.mjs        # Upload interno silencioso pelo FilePicker
+├── automatic-repair.mjs    # Reconciliação automática de referências WebP
 ├── document-reference.mjs  # Atualização dos campos de Actor/Token/Item/Scene
 ├── file-recovery.mjs       # Recuperação por extensão e busca recursiva
 ├── upload-hook.mjs         # Hook: libWrapper → FilePicker.upload

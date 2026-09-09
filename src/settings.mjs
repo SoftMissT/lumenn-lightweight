@@ -57,6 +57,14 @@ export function registerSettings(menuType) {
     restricted: true,
   });
 
+  game.settings.register(MODULE_ID, "lastReferenceRepairVersion", {
+    scope: "world",
+    config: false,
+    type: String,
+    default: "",
+    restricted: true,
+  });
+
   // Alias settings for backward compatibility if needed, or we just map old getter functions to new keys
 }
 

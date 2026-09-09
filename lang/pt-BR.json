@@ -32,6 +32,7 @@
       "selectAll": "Selecionar tudo",
       "clearAll": "Limpar",
       "noAssets": "Nenhuma referência de imagem foi encontrada no mundo.",
+      "webpSkipped": "WEBP ignorado",
       "groups": {
         "portraits": "Retratos",
         "tokens": "Tokens",

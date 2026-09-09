@@ -7,7 +7,18 @@
           count=assets.length
         }}</span>
     </div>
-    <span class="lumenn-quality-badge">WebP {{qualityPercent}}%</span>
+    <div class="lumenn-summary-badges">
+      {{#each formats as |entry|}}
+        <span class="lumenn-format-badge" data-format="{{entry.format}}">
+          {{entry.format}} {{entry.count}}
+        </span>
+      {{/each}}
+      <span class="lumenn-webp-skipped">
+        <i class="fa-solid fa-check"></i>
+        {{localize "lumenn-lightweight.dialog.webpSkipped"}}
+      </span>
+      <span class="lumenn-quality-badge">WebP {{qualityPercent}}%</span>
+    </div>
   </header>
 
   {{#if assets.length}}
@@ -65,7 +76,13 @@
                   checked
                 />
                 <label for="l_asset_{{asset.index}}" title="{{asset.imgPath}}">
-                  <span>{{asset.name}}</span>
+                  <span class="lumenn-asset-name-line">
+                    <span>{{asset.name}}</span>
+                    <strong
+                      class="lumenn-format-badge"
+                      data-format="{{asset.format}}"
+                    >{{asset.format}}</strong>
+                  </span>
                   <small>{{asset.imgPath}}</small>
                 </label>
               </div>

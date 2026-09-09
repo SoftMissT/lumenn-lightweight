@@ -11,5 +11,7 @@ describe("batch menu template", () => {
       true,
     );
     expect(template.endsWith("</section>")).toBe(true);
+    expect(template).toContain("{{asset.format}}");
+    expect(template).toContain("lumenn-lightweight.dialog.webpSkipped");
   });
 });

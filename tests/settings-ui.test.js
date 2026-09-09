@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupAssetsByKind } from "../src/ui.mjs";
+import { groupAssetsByKind, summarizeAssetFormats } from "../src/ui.mjs";
 
 describe("asset grouping", () => {
   it("separates portraits, tokens, items and scene layers", () => {
@@ -21,5 +21,21 @@ describe("asset grouping", () => {
       ["sceneForegrounds", 1],
     ]);
     expect(groups.filter((group) => group.active)).toHaveLength(1);
+  });
+
+  it("counts PNG, JPG and JPEG separately without presenting WebP", () => {
+    expect(
+      summarizeAssetFormats([
+        { format: "PNG" },
+        { format: "PNG" },
+        { format: "JPG" },
+        { format: "JPEG" },
+        { format: "WEBP" },
+      ]),
+    ).toEqual([
+      { format: "PNG", count: 2 },
+      { format: "JPG", count: 1 },
+      { format: "JPEG", count: 1 },
+    ]);
   });
 });

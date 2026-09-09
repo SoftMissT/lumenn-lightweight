@@ -32,6 +32,7 @@
       "selectAll": "Select all",
       "clearAll": "Clear",
       "noAssets": "No image references were found in this world.",
+      "webpSkipped": "WEBP skipped",
       "groups": {
         "portraits": "Portraits",
         "tokens": "Tokens",

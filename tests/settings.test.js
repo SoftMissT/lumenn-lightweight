@@ -27,6 +27,9 @@ describe("settings", () => {
     expect(game.settings._store["lumenn-lightweight.skipThresholdBytes"]).toBe(
       102400,
     );
+    expect(
+      game.settings._store["lumenn-lightweight.lastReferenceRepairVersion"],
+    ).toBe("");
     expect(game.settings._menus["lumenn-lightweight.batchMenu"]).toMatchObject({
       type: BatchMenu,
       restricted: true,

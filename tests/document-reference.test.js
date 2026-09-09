@@ -39,8 +39,11 @@ describe("document image reference updates", () => {
   });
 
   it("updates a placed token through its parent Scene", async () => {
-    const token = { update: vi.fn().mockResolvedValue(undefined) };
-    const scene = { tokens: new Map([["token-1", token]]) };
+    const token = {};
+    const scene = {
+      tokens: new Map([["token-1", token]]),
+      updateEmbeddedDocuments: vi.fn().mockResolvedValue([token]),
+    };
 
     await updateAssetDocumentReference(
       { id: "token-1", sceneId: "scene-1", type: "Scene Token" },
@@ -52,8 +55,8 @@ describe("document image reference updates", () => {
       },
     );
 
-    expect(token.update).toHaveBeenCalledWith({
-      "texture.src": "assets/token.webp",
-    });
+    expect(scene.updateEmbeddedDocuments).toHaveBeenCalledWith("Token", [
+      { _id: "token-1", "texture.src": "assets/token.webp" },
+    ]);
   });
 });
