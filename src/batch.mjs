@@ -1,39 +1,48 @@
-import { compressImage, shouldReplace } from './compression.mjs';
-import { getQuality, getOverridePercent } from './settings.mjs';
+import { compressImage, shouldReplace } from "./compression.mjs";
+import { getQuality, getOverridePercent } from "./settings.mjs";
 
-const MODULE_ID = 'lumenn-lightweight';
+const MODULE_ID = "lumenn-lightweight";
 
 export async function processBatch(selectedAssets, options = {}) {
-  const { 
-    quality = getQuality(), 
+  const {
+    quality = getQuality(),
     overridePercent = getOverridePercent(),
     skipThresholdBytes = 102400,
-    onProgress, 
-    updateDocumentFn, 
-    fetchImageFn, 
-    saveImageFn 
+    onProgress,
+    updateDocumentFn,
+    fetchImageFn,
+    saveImageFn,
   } = options;
 
   const results = {
     processed: 0,
     skipped: 0,
-    failed: []
+    failed: [],
   };
 
   const total = selectedAssets.length;
 
   for (let i = 0; i < selectedAssets.length; i++) {
     const asset = selectedAssets[i];
-    
+
     // micro-yield to avoid freezing UI
-    await new Promise(r => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
 
     try {
       const fileOrBlob = await fetchImageFn(asset.imgPath);
-      
-      const compressed = await compressImage(fileOrBlob, quality, { skipThresholdBytes });
 
-      if (compressed.skipped || !shouldReplace(compressed.originalSize, compressed.newSize, overridePercent)) {
+      const compressed = await compressImage(fileOrBlob, quality, {
+        skipThresholdBytes,
+      });
+
+      if (
+        compressed.skipped ||
+        !shouldReplace(
+          compressed.originalSize,
+          compressed.newSize,
+          overridePercent,
+        )
+      ) {
         results.skipped++;
       } else {
         const newImgPath = await saveImageFn(asset.imgPath, compressed.blob);
@@ -41,7 +50,10 @@ export async function processBatch(selectedAssets, options = {}) {
         results.processed++;
       }
     } catch (err) {
-      console.error(`${MODULE_ID}: Failed to process batch item ${asset.id}`, err);
+      console.error(
+        `${MODULE_ID}: Failed to process batch item ${asset.id}`,
+        err,
+      );
       results.failed.push({ id: asset.id, error: err.message });
     }
 

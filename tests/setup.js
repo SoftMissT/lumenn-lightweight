@@ -1,6 +1,8 @@
 // Global mocks for Foundry VTT in tests
 globalThis.FormApplication = class FormApplication {
-  static get defaultOptions() { return {}; }
+  static get defaultOptions() {
+    return {};
+  }
 };
 
 globalThis.Dialog = class Dialog {
@@ -10,51 +12,62 @@ globalThis.Dialog = class Dialog {
 
 globalThis.foundry = {
   utils: {
-    mergeObject: (a, b) => ({ ...a, ...b })
-  }
+    mergeObject: (a, b) => ({ ...a, ...b }),
+  },
 };
 
 globalThis.game = {
-  data: { path: '/foundry/data' },
+  data: { path: "/foundry/data" },
   settings: {
     _store: {},
     register: (mod, key, data) => {
       globalThis.game.settings._store[`${mod}.${key}`] = data.default;
     },
     registerMenu: () => {},
-    get: (mod, key) => globalThis.game.settings._store[`${mod}.${key}`]
+    get: (mod, key) => globalThis.game.settings._store[`${mod}.${key}`],
   },
   i18n: {
-    localize: (key) => key
-  }
+    localize: (key) => key,
+  },
 };
 
 globalThis.ui = {
   notifications: {
     info: () => {},
     warn: () => {},
-    error: () => {}
-  }
+    error: () => {},
+  },
 };
 
 globalThis.$ = () => {
   return {
     on: () => {},
     find: () => ({ last: () => ({ append: () => {} }) }),
-    prop: () => ({ find: () => ({ removeClass: () => ({ addClass: () => {} }) }) })
+    prop: () => ({
+      find: () => ({ removeClass: () => ({ addClass: () => {} }) }),
+    }),
   };
 };
 
 globalThis.Hooks = {
-  on: () => {}
+  on: () => {},
 };
 
 globalThis.createImageBitmap = async () => ({
-  width: 100, height: 100, close: () => {}
+  width: 100,
+  height: 100,
+  close: () => {},
 });
 
 globalThis.OffscreenCanvas = class {
-  constructor(w, h) { this.width = w; this.height = h; }
-  getContext() { return { drawImage: () => {} }; }
-  convertToBlob() { return Promise.resolve(new Blob(['compressed'], { type: 'image/webp' })); }
+  constructor(w, h) {
+    this.width = w;
+    this.height = h;
+  }
+  getContext() {
+    return { drawImage: () => {} };
+  }
+  convertToBlob() {
+    return Promise.resolve(new Blob(["compressed"], { type: "image/webp" }));
+  }
 };

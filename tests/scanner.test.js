@@ -30,7 +30,7 @@ describe("scanner", () => {
       "assets/goblin_token.png",
       "assets/sword.jpg",
       "assets/map.webp",
-      "assets/clouds.png"
+      "assets/clouds.png",
     ]);
   });
 

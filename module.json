@@ -2,7 +2,7 @@
   "id": "lumenn-lightweight",
   "title": "Lumenn Lightweight — Otimizador de Imagens",
   "description": "Otimiza imagens para WebP com modo lote e hook de upload automático",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "license": "GPL-3.0",
   "authors": [
     {
@@ -26,12 +26,8 @@
       }
     ]
   },
-  "esmodules": [
-    "src/lumenn-lightweight.js"
-  ],
-  "styles": [
-    "styles/lumenn-lightweight.css"
-  ],
+  "esmodules": ["src/lumenn-lightweight.js"],
+  "styles": ["styles/lumenn-lightweight.css"],
   "languages": [
     {
       "lang": "en",

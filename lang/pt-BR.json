@@ -20,7 +20,7 @@
       "button": "Otimizador de Imagens"
     },
     "dialog": {
-      "title": "Lumenn Lightweight — Otimizador de Imagens",
+      "title": "Lumenn Lightweight Otimizador de Imagens",
       "quality": "Qualidade da Compressão",
       "overridePercent": "Economia Mínima %",
       "autoOptimize": "Otimizar uploads automaticamente",
@@ -30,7 +30,7 @@
     },
     "notifications": {
       "optimized": "{file} → {newFile} (−{percent}%)",
-      "skipped": "{file} — compressão não reduziu tamanho suficiente",
+      "skipped": "{file} compressão não reduziu tamanho suficiente",
       "done": "Pronto! {optimized} otimizados, {skipped} pulados, {saved} KB economizados.",
       "failed": "Falha ao otimizar {file}. Verifique o console.",
       "noLibWrapper": "libWrapper não encontrado. Hook de upload não registrado."
