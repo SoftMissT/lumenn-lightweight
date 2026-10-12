@@ -53,6 +53,29 @@
       "done": "Pronto! {optimized} otimizados, {skipped} pulados, {saved} KB economizados.",
       "failed": "Falha ao otimizar {file}. Verifique o console.",
       "noLibWrapper": "libWrapper não encontrado. Hook de upload não registrado."
+    },
+    "errorLog": {
+      "journalName": "Lumenn Lightweight — Log de erros",
+      "pageName": "Lote {date}",
+      "summary": "Lumenn Lightweight {version} · Foundry {foundry} · {processed} processados, {skipped} pulados, {failed} falhas.",
+      "columns": {
+        "type": "Tipo",
+        "name": "Documento",
+        "path": "Caminho",
+        "stage": "Etapa",
+        "error": "Erro"
+      },
+      "stages": {
+        "fetch": "Localizar arquivo",
+        "compress": "Comprimir",
+        "upload": "Enviar WebP",
+        "update": "Atualizar documento",
+        "reconcile": "Reconciliar referências"
+      },
+      "omitted": "{count} falhas omitidas desta tabela. Veja o console para a lista completa.",
+      "copyBlock": "Texto para copiar",
+      "exported": "Log de erros salvo no Diário \"{name}\".",
+      "exportFailed": "Não foi possível salvar o log no Diário. Verifique o console."
     }
   }
 }

@@ -10,6 +10,7 @@ import {
   getOverridePercent,
 } from "./settings.mjs";
 import { CustomNotification } from "./notification.mjs";
+import { FILE_PICKER_UPLOAD_TARGET } from "./foundry-compat.mjs";
 
 const MODULE_ID = "lumenn-lightweight";
 let uploadBypassDepth = 0;
@@ -42,7 +43,7 @@ export function registerUploadHook() {
 
   libWrapper.register(
     MODULE_ID,
-    "FilePicker.upload",
+    FILE_PICKER_UPLOAD_TARGET,
     async function (wrapped, source, path, file, body, options) {
       if (uploadBypassDepth > 0) {
         return wrapped(source, path, file, body, options);

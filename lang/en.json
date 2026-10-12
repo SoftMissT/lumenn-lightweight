@@ -53,6 +53,29 @@
       "done": "Done! {optimized} optimized, {skipped} skipped, {saved} KB saved.",
       "failed": "Optimization failed for {file}. Check console.",
       "noLibWrapper": "libWrapper not found. Upload hook not registered."
+    },
+    "errorLog": {
+      "journalName": "Lumenn Lightweight — Error log",
+      "pageName": "Batch {date}",
+      "summary": "Lumenn Lightweight {version} · Foundry {foundry} · {processed} processed, {skipped} skipped, {failed} failed.",
+      "columns": {
+        "type": "Type",
+        "name": "Document",
+        "path": "Path",
+        "stage": "Stage",
+        "error": "Error"
+      },
+      "stages": {
+        "fetch": "Locate file",
+        "compress": "Compress",
+        "upload": "Upload WebP",
+        "update": "Update document",
+        "reconcile": "Reconcile references"
+      },
+      "omitted": "{count} failures omitted from this table. See the console for the full list.",
+      "copyBlock": "Text to copy",
+      "exported": "Error log saved to the Journal \"{name}\".",
+      "exportFailed": "Could not save the log to the Journal. Check the console."
     }
   }
 }

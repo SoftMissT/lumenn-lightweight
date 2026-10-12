@@ -59,4 +59,46 @@ describe("document image reference updates", () => {
       { _id: "token-1", "texture.src": "assets/token.webp" },
     ]);
   });
+
+  it.each([
+    ["Scene Background", "background.src"],
+    ["Scene Foreground", "foreground.src"],
+  ])(
+    "updates %s on a v14 Level through its parent Scene",
+    async (type, levelField) => {
+      const level = {};
+      const scene = {
+        levels: new Map([["lvl-1", level]]),
+        updateEmbeddedDocuments: vi.fn().mockResolvedValue([level]),
+      };
+
+      await updateAssetDocumentReference(
+        { id: "scene-1", sceneId: "scene-1", levelId: "lvl-1", type },
+        "assets/map.webp",
+        { scenes: new Map([["scene-1", scene]]) },
+      );
+
+      expect(scene.updateEmbeddedDocuments).toHaveBeenCalledWith("Level", [
+        { _id: "lvl-1", [levelField]: "assets/map.webp" },
+      ]);
+    },
+  );
+
+  it("fails when the Level no longer exists", async () => {
+    const scene = { levels: new Map(), updateEmbeddedDocuments: vi.fn() };
+
+    await expect(
+      updateAssetDocumentReference(
+        {
+          id: "scene-1",
+          sceneId: "scene-1",
+          levelId: "gone",
+          type: "Scene Background",
+        },
+        "assets/map.webp",
+        { scenes: new Map([["scene-1", scene]]) },
+      ),
+    ).rejects.toThrow("Level da Scene não encontrado: gone");
+    expect(scene.updateEmbeddedDocuments).not.toHaveBeenCalled();
+  });
 });

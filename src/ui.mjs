@@ -8,6 +8,8 @@ import { createFoundryImageFetcher } from "./file-recovery.mjs";
 import { updateAssetDocumentReference } from "./document-reference.mjs";
 import { uploadBatchImage } from "./batch-upload.mjs";
 import { reconcileWorldWebpReferences } from "./automatic-repair.mjs";
+import { getFilePicker } from "./foundry-compat.mjs";
+import { buildErrorReport, exportErrorReportToJournal } from "./error-log.mjs";
 
 const MODULE_ID = "lumenn-lightweight";
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -181,7 +183,7 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(
     try {
       const fetchFoundryImage = createFoundryImageFetcher({
         fetchFn: fetch,
-        browseFn: (...args) => FilePicker.browse(...args),
+        browseFn: (...args) => getFilePicker().browse(...args),
       });
       const results = await processBatch(selectedAssets, {
         quality: getQuality(),
@@ -189,7 +191,7 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(
         fetchImageFn: fetchFoundryImage,
         saveImageFn: (path, compressedBlob) =>
           uploadBatchImage(path, compressedBlob, (...args) =>
-            FilePicker.upload(...args),
+            getFilePicker().upload(...args),
           ),
         updateDocumentFn: async (asset, newPath) => {
           await updateAssetDocumentReference(asset, newPath, {
@@ -211,7 +213,27 @@ export class LumennBatchMenuApp extends HandlebarsApplicationMixin(
       const repairedCount = results.repaired + reconciliation.repaired;
       const summary = `${MODULE_ID}: Concluído! ${results.processed} processados (${repairedCount} referências reparadas), ${results.skipped} pulados, ${failedCount} falharam.`;
       if (failedCount > 0) {
-        ui.notifications.error(`${summary} Verifique o console.`);
+        const localize = (key, data) =>
+          data ? game.i18n.format(key, data) : game.i18n.localize(key);
+        let journal = null;
+        try {
+          journal = await exportErrorReportToJournal(
+            buildErrorReport({
+              failed: results.failed,
+              reconciliationFailed: reconciliation.failed,
+              stats: results,
+              moduleVersion: game.modules.get(MODULE_ID)?.version,
+              foundryVersion: game.version,
+            }),
+            { localize },
+          );
+        } catch (error) {
+          console.error(`${MODULE_ID}: Não foi possível exportar o log para o Diário`, error);
+        }
+        const outcome = journal
+          ? localize(`${MODULE_ID}.errorLog.exported`, { name: journal.name })
+          : localize(`${MODULE_ID}.errorLog.exportFailed`);
+        ui.notifications.error(`${summary} ${outcome}`);
       } else {
         ui.notifications.info(summary);
       }

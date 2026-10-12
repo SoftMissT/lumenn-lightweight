@@ -70,4 +70,55 @@ describe("scanner", () => {
     expect(results).toHaveLength(2);
     expect(results.map((asset) => asset.id)).toEqual(["a1", "a2"]);
   });
+
+  it("reads v14 Scene Levels without touching deprecated Scene#background/#foreground", () => {
+    const scene = {
+      id: "s1",
+      name: "Palco",
+      levels: new Map([
+        [
+          "l1",
+          {
+            id: "l1",
+            name: "Térreo",
+            background: { src: "assets/floor.png" },
+            foreground: { src: "assets/roof.jpg" },
+          },
+        ],
+        [
+          "l2",
+          {
+            id: "l2",
+            name: "Subsolo",
+            background: { src: "assets/cellar.webp" },
+            foreground: { src: null },
+          },
+        ],
+      ]),
+      tokens: [],
+    };
+    for (const key of ["background", "foreground"]) {
+      Object.defineProperty(scene, key, {
+        get() {
+          throw new Error(`deprecated Scene#${key} was read`);
+        },
+      });
+    }
+
+    const results = scanUnoptimizedAssets({ scenes: [scene] });
+
+    expect(results).toHaveLength(2);
+    expect(results[0]).toMatchObject({
+      type: "Scene Background",
+      imgPath: "assets/floor.png",
+      sceneId: "s1",
+      levelId: "l1",
+      name: "Palco / Térreo",
+    });
+    expect(results[1]).toMatchObject({
+      type: "Scene Foreground",
+      imgPath: "assets/roof.jpg",
+      levelId: "l1",
+    });
+  });
 });

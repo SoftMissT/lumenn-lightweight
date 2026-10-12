@@ -104,4 +104,136 @@ describe("processBatch", () => {
     );
     expect(results).toMatchObject({ processed: 1, repaired: 1, skipped: 0 });
   });
+
+  const compressedOk = () =>
+    vi.spyOn(compression, "compressImage").mockResolvedValue({
+      blob: new Blob(["w"], { type: "image/webp" }),
+      originalSize: 10000,
+      newSize: 100,
+      skipped: false,
+    });
+  const bigBlob = () => new Blob([new Uint8Array(10000)]);
+
+  it("records name, type, path and the stage where an item broke", async () => {
+    const asset = {
+      id: "bg1",
+      imgPath: "assets/gone.png",
+      name: "Cena",
+      type: "Scene Background",
+    };
+    const results = await processBatch([asset], {
+      quality: 0.85,
+      overridePercent: 0,
+      fetchImageFn: vi.fn().mockRejectedValue(new Error("Arquivo não encontrado")),
+      saveImageFn: vi.fn(),
+      updateDocumentFn: vi.fn(),
+    });
+
+    expect(results.failed).toEqual([
+      {
+        id: "bg1",
+        name: "Cena",
+        type: "Scene Background",
+        path: "assets/gone.png",
+        stage: "fetch",
+        error: "Arquivo não encontrado",
+      },
+    ]);
+  });
+
+  it("reports the upload stage when saving the WebP fails", async () => {
+    const spy = compressedOk();
+    const results = await processBatch(
+      [{ id: "a1", imgPath: "a.png", name: "A", type: "Actor" }],
+      {
+        quality: 0.85,
+        overridePercent: 0,
+        fetchImageFn: vi.fn().mockResolvedValue(bigBlob()),
+        saveImageFn: vi.fn().mockRejectedValue(new Error("sem permissão")),
+        updateDocumentFn: vi.fn(),
+      },
+    );
+
+    expect(results.failed[0]).toMatchObject({
+      stage: "upload",
+      error: "sem permissão",
+    });
+    spy.mockRestore();
+  });
+
+  it("fetches, compresses and uploads a shared file once, then reuses the result", async () => {
+    const spy = compressedOk();
+    const fetchImageFn = vi.fn().mockResolvedValue(bigBlob());
+    const saveImageFn = vi.fn().mockResolvedValue("shared.webp");
+    const updateDocumentFn = vi.fn().mockResolvedValue();
+    const assets = ["a", "b", "c"].map((id) => ({
+      id,
+      imgPath: "shared.png",
+      name: id,
+      type: "Actor",
+    }));
+
+    const results = await processBatch(assets, {
+      quality: 0.85,
+      overridePercent: 0,
+      fetchImageFn,
+      saveImageFn,
+      updateDocumentFn,
+    });
+
+    expect(fetchImageFn).toHaveBeenCalledTimes(1);
+    expect(saveImageFn).toHaveBeenCalledTimes(1);
+    expect(updateDocumentFn).toHaveBeenCalledTimes(3);
+    expect(results.processed).toBe(3);
+    spy.mockRestore();
+  });
+
+  it("lists every document that points to a missing file without fetching it again", async () => {
+    const fetchImageFn = vi.fn().mockRejectedValue(new Error("missing"));
+    const assets = ["a", "b"].map((id) => ({
+      id,
+      imgPath: "gone.png",
+      name: id,
+      type: "Item",
+    }));
+
+    const results = await processBatch(assets, {
+      quality: 0.85,
+      overridePercent: 0,
+      fetchImageFn,
+      saveImageFn: vi.fn(),
+      updateDocumentFn: vi.fn(),
+    });
+
+    expect(fetchImageFn).toHaveBeenCalledTimes(1);
+    expect(results.failed.map((f) => f.id)).toEqual(["a", "b"]);
+    expect(results.failed.every((f) => f.stage === "fetch")).toBe(true);
+  });
+
+  it("does not let one document's update failure fail its siblings", async () => {
+    const spy = compressedOk();
+    const updateDocumentFn = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("documento sumiu"))
+      .mockResolvedValue();
+    const assets = ["a", "b"].map((id) => ({
+      id,
+      imgPath: "shared.png",
+      name: id,
+      type: "Actor",
+    }));
+
+    const results = await processBatch(assets, {
+      quality: 0.85,
+      overridePercent: 0,
+      fetchImageFn: vi.fn().mockResolvedValue(bigBlob()),
+      saveImageFn: vi.fn().mockResolvedValue("shared.webp"),
+      updateDocumentFn,
+    });
+
+    expect(results.failed.map((f) => f.id)).toEqual(["a"]);
+    expect(results.failed[0].stage).toBe("update");
+    expect(results.processed).toBe(1);
+    spy.mockRestore();
+  });
 });

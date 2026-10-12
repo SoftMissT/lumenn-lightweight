@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- Quando o lote tem falhas, o módulo grava um log no Diário "Lumenn Lightweight — Log de erros" (visível só ao GM). Cada execução acrescenta uma página com tipo, documento, caminho, etapa que falhou (localizar, comprimir, enviar, atualizar, reconciliar) e o erro, mais um bloco de texto para copiar.
+
+### Fixed
+
+- Removidos os avisos de depreciação do próprio módulo: `FilePicker` global (v13) e `Scene#background` / `Scene#foreground` (v14). O scanner e a gravação passam a usar `Scene#levels` (`background.src` / `foreground.src`) na v14 e mantêm o caminho antigo na v13.
+- O lote não processa mais o mesmo arquivo duas vezes quando vários documentos o referenciam: o resultado (atualizado, pulado ou falha) é reaproveitado.
+- Cada falha do lote agora registra nome, tipo, caminho e a etapa em que quebrou.
+
 ## [0.0.10] - 2026-09-09
 
 ### Fixed

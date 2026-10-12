@@ -53,7 +53,7 @@ describe("upload-hook", () => {
 
     expect(libWrapper.register).toHaveBeenCalledWith(
       "lumenn-lightweight",
-      "FilePicker.upload",
+      "foundry.applications.apps.FilePicker.implementation.upload",
       expect.any(Function),
       "WRAPPER",
     );

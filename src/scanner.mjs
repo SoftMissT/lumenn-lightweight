@@ -56,10 +56,23 @@ export function scanUnoptimizedAssets(collections, thresholdBytes = 102400) {
   }
 
   for (const doc of scenes) {
-    if (doc.background?.src)
-      evaluateAsset(doc.id, "Scene Background", doc.name, doc.background.src);
-    if (doc.foreground)
-      evaluateAsset(doc.id, "Scene Foreground", doc.name, doc.foreground);
+    // v14 moved background/foreground into Scene Levels; Scene#background and
+    // Scene#foreground are deprecated getters there. v13 scenes have no levels.
+    const levels = doc.levels?.size ? [...doc.levels.values()] : null;
+    if (levels) {
+      for (const level of levels) {
+        const label =
+          levels.length > 1 && level.name ? `${doc.name} / ${level.name}` : doc.name;
+        const target = { sceneId: doc.id, levelId: level.id };
+        evaluateAsset(doc.id, "Scene Background", label, level.background?.src, target);
+        evaluateAsset(doc.id, "Scene Foreground", label, level.foreground?.src, target);
+      }
+    } else {
+      if (doc.background?.src)
+        evaluateAsset(doc.id, "Scene Background", doc.name, doc.background.src);
+      if (doc.foreground)
+        evaluateAsset(doc.id, "Scene Foreground", doc.name, doc.foreground);
+    }
     for (const token of doc.tokens ?? []) {
       evaluateAsset(
         token.id,

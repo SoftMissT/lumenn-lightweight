@@ -7,6 +7,7 @@ import {
 } from "./file-recovery.mjs";
 import { scanUnoptimizedAssets } from "./scanner.mjs";
 import { updateAssetDocumentReference } from "./document-reference.mjs";
+import { getFilePicker } from "./foundry-compat.mjs";
 
 const MODULE_ID = "lumenn-lightweight";
 
@@ -106,7 +107,7 @@ export async function reconcileWorldWebpReferences() {
   };
   const assets = scanUnoptimizedAssets(collections);
   return reconcileExistingWebpReferences(assets, {
-    browseFn: (...args) => FilePicker.browse(...args),
+    browseFn: (...args) => getFilePicker().browse(...args),
     updateDocumentFn: (asset, newPath) =>
       updateAssetDocumentReference(asset, newPath, collections),
   });
