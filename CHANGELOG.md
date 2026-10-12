@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.0.11] - 2026-10-12
 
 ### Added
 
@@ -13,6 +13,13 @@ All notable changes to this project will be documented in this file.
 - Removidos os avisos de depreciação do próprio módulo: `FilePicker` global (v13) e `Scene#background` / `Scene#foreground` (v14). O scanner e a gravação passam a usar `Scene#levels` (`background.src` / `foreground.src`) na v14 e mantêm o caminho antigo na v13.
 - O lote não processa mais o mesmo arquivo duas vezes quando vários documentos o referenciam: o resultado (atualizado, pulado ou falha) é reaproveitado.
 - Cada falha do lote agora registra nome, tipo, caminho e a etapa em que quebrou.
+
+### Changed
+
+- O lote cede o turno à interface por orçamento de tempo (16 ms de trabalho), não mais com um temporizador por item. Medido no Node/vitest com 200 itens instantâneos: 2753 ms antes, 13–15 ms depois; em navegador o ganho é menor, pois o piso do temporizador é menor.
+- A indexação do inventário do FilePicker navega até 6 diretórios irmãos em paralelo, em vez de um por vez. A ordem da listagem, o limite de diretórios e o tratamento de subpastas ilegíveis não mudaram.
+- O logo do README foi recodificado (1672×941 → 1200×675, qualidade 90): 1.838.048 → 84.556 bytes. O pacote da release leva esse arquivo.
+- README reescrito: log de erros, Levels da v14, árvore de arquivos atual e solução de problemas.
 
 ## [0.0.10] - 2026-09-09
 
