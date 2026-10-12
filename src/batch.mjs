@@ -2,6 +2,7 @@ import { compressImage, shouldReplace } from "./compression.mjs";
 import { getQuality, getOverridePercent } from "./settings.mjs";
 
 const MODULE_ID = "lumenn-lightweight";
+const YIELD_AFTER_MS = 16;
 
 export async function processBatch(selectedAssets, options = {}) {
   const {
@@ -25,12 +26,17 @@ export async function processBatch(selectedAssets, options = {}) {
   const outcomes = new Map();
 
   const total = selectedAssets.length;
+  let lastYield = performance.now();
 
   for (let i = 0; i < selectedAssets.length; i++) {
     const asset = selectedAssets[i];
 
-    // micro-yield to avoid freezing UI
-    await new Promise((r) => setTimeout(r, 0));
+    // Give the UI a turn only after a frame of work; a timer per item costs
+    // the browser's minimum timeout (~4 ms) even when the item was instant.
+    if (performance.now() - lastYield >= YIELD_AFTER_MS) {
+      await new Promise((r) => setTimeout(r, 0));
+      lastYield = performance.now();
+    }
 
     // `stage` tells the error log where an item broke: fetch, compress, upload or update.
     let stage = "fetch";

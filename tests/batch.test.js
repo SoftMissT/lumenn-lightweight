@@ -210,6 +210,27 @@ describe("processBatch", () => {
     expect(results.failed.every((f) => f.stage === "fetch")).toBe(true);
   });
 
+  it("yields to the UI by time budget, not once per item", async () => {
+    const assets = Array.from({ length: 200 }, (_, i) => ({
+      id: `n${i}`,
+      imgPath: "gone.png",
+      name: `n${i}`,
+      type: "Item",
+    }));
+    const timers = vi.spyOn(globalThis, "setTimeout");
+
+    await processBatch(assets, {
+      quality: 0.85,
+      overridePercent: 0,
+      fetchImageFn: vi.fn().mockRejectedValue(new Error("missing")),
+      saveImageFn: vi.fn(),
+      updateDocumentFn: vi.fn(),
+    });
+
+    expect(timers.mock.calls.length).toBeLessThan(assets.length / 4);
+    timers.mockRestore();
+  });
+
   it("does not let one document's update failure fail its siblings", async () => {
     const spy = compressedOk();
     const updateDocumentFn = vi

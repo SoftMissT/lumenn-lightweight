@@ -106,42 +106,47 @@ export function getStorageRoot(path) {
 export async function browseFoundryTree(
   root,
   browseFn,
-  { maxDirectories = 5000 } = {},
+  { maxDirectories = 5000, concurrency = 6 } = {},
 ) {
-  const queue = [root];
-  const visited = new Set();
+  const visited = new Set([root]);
   const files = [];
+  let level = [root];
 
-  while (queue.length > 0) {
-    const directory = queue.shift();
-    if (!directory || visited.has(directory)) continue;
-    if (visited.size >= maxDirectories) {
-      throw new Error(
-        `Busca interrompida após ${maxDirectories} diretórios em ${root}`,
+  while (level.length > 0) {
+    const next = [];
+    // Sibling directories are independent server round trips: browse a few at
+    // a time, keeping the listing order of each level deterministic.
+    for (let i = 0; i < level.length; i += concurrency) {
+      const listings = await Promise.all(
+        level.slice(i, i + concurrency).map(async (directory) => {
+          try {
+            return await browseFn("data", directory, {});
+          } catch (error) {
+            if (directory === root) throw error;
+            console.warn(
+              `lumenn-lightweight: Diretório ignorado durante busca: ${directory}`,
+              error,
+            );
+            return null;
+          }
+        }),
       );
-    }
 
-    visited.add(directory);
-    let result;
-    try {
-      result = await browseFn("data", directory, {});
-    } catch (error) {
-      if (directory === root) throw error;
-      console.warn(
-        `lumenn-lightweight: Diretório ignorado durante busca: ${directory}`,
-        error,
-      );
-      continue;
+      for (const listing of listings) {
+        files.push(...(listing?.files ?? []));
+        for (const child of listing?.dirs ?? []) {
+          if (!child || visited.has(child)) continue;
+          if (visited.size >= maxDirectories) {
+            throw new Error(
+              `Busca interrompida após ${maxDirectories} diretórios em ${root}`,
+            );
+          }
+          visited.add(child);
+          next.push(child);
+        }
+      }
     }
-
-    files.push(...(result?.files ?? []));
-    for (const child of result?.dirs ?? []) {
-      if (!visited.has(child)) queue.push(child);
-    }
-
-    if (visited.size % 25 === 0) {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    }
+    level = next;
   }
 
   return files;

@@ -71,6 +71,56 @@ describe("Foundry image recovery", () => {
     expect(browseFn).toHaveBeenNthCalledWith(2, "data", "assets/new", {});
   });
 
+  it("browses sibling directories in parallel but never beyond the concurrency limit", async () => {
+    const children = Array.from({ length: 14 }, (_, i) => `assets/d${i}`);
+    let inFlight = 0;
+    let peak = 0;
+    const browseFn = vi.fn(async (_source, directory) => {
+      inFlight++;
+      peak = Math.max(peak, inFlight);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      inFlight--;
+      if (directory === "assets") return { dirs: children, files: [] };
+      return { dirs: [], files: [`${directory}/x.png`] };
+    });
+
+    const files = await browseFoundryTree("assets", browseFn, { concurrency: 4 });
+
+    expect(peak).toBeGreaterThan(1);
+    expect(peak).toBeLessThanOrEqual(4);
+    expect(browseFn).toHaveBeenCalledTimes(15);
+    expect(files).toEqual(children.map((d) => `${d}/x.png`));
+  });
+
+  it("stops with a clear error when the tree exceeds maxDirectories", async () => {
+    const browseFn = vi.fn(async (_source, directory) =>
+      directory === "assets"
+        ? { dirs: ["assets/a", "assets/b", "assets/c"], files: [] }
+        : { dirs: [], files: [] },
+    );
+
+    await expect(
+      browseFoundryTree("assets", browseFn, { maxDirectories: 3 }),
+    ).rejects.toThrow("Busca interrompida após 3 diretórios em assets");
+  });
+
+  it("skips an unreadable subdirectory but fails when the root is unreadable", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const browseFn = vi.fn(async (_source, directory) => {
+      if (directory === "assets/bad") throw new Error("403");
+      if (directory === "assets") return { dirs: ["assets/bad", "assets/ok"], files: [] };
+      return { dirs: [], files: ["assets/ok/a.png"] };
+    });
+
+    await expect(browseFoundryTree("assets", browseFn)).resolves.toEqual([
+      "assets/ok/a.png",
+    ]);
+    await expect(
+      browseFoundryTree("assets", vi.fn().mockRejectedValue(new Error("root down"))),
+    ).rejects.toThrow("root down");
+    warn.mockRestore();
+  });
+
   it("recovers a literal-percent physical filename", async () => {
     const blob = new Blob(["webp"], { type: "image/webp" });
     const fetchFn = vi
